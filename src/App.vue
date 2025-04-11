@@ -72,11 +72,19 @@
 
     <!-- Leaderboard -->
     <section class="leaderboard">
-        <h2>Player Leaderboard (Active Players)</h2>
-        <ul v-if="rankedPlayers.length > 0">
+        <h2>
+            Player Leaderboard (Active Players)
+            <button @click="isLeaderboardVisible = !isLeaderboardVisible" class="toggle-btn">
+                {{ isLeaderboardVisible ? 'Hide' : 'Show' }}
+            </button>
+        </h2>
+        <ul v-if="isLeaderboardVisible && rankedPlayers.length > 0">
             <li v-for="(player, index) in rankedPlayers" :key="player.id">
                 <span>{{ index + 1 }}. {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}</span>
             </li>
+        </ul>
+        <p v-if="isLeaderboardVisible && rankedPlayers.length === 0">No active players to rank.</p>
+        <p v-else-if="!isLeaderboardVisible">Leaderboard is hidden.</p>
         </ul>
         <p v-else>No active players to rank.</p>
     </section>
@@ -116,7 +124,7 @@
                       @dragstart="onDragStart($event, player, 'A')"
                       @dragend="onDragEnd"
                     >
-                        {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}
+                        {{ player.name }} ({{ player.position }})
                     </li>
                 </ul>
             </div>
@@ -136,7 +144,7 @@
                        @dragstart="onDragStart($event, player, 'B')"
                        @dragend="onDragEnd"
                      >
-                        {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}
+                        {{ player.name }} ({{ player.position }})
                     </li>
                 </ul>
             </div>
@@ -160,6 +168,7 @@ const teamA = ref([]); // Generated Team A
 const teamB = ref([]); // Generated Team B
 const showTeams = ref(false); // Flag to control team display
 const draftType = ref('serpentine'); // 'serpentine' or 'simple'
+const isLeaderboardVisible = ref(false); // Control leaderboard visibility
 
 // Computed property to get only active players
 const activePlayers = computed(() => players.value.filter(p => p.active));
@@ -740,5 +749,14 @@ const onDrop = (event, targetTeam) => {
 .player-count.count-over-limit {
   color: red;
   font-weight: bold;
+}
+
+/* Toggle Button Styling */
+.toggle-btn {
+    font-size: 0.6em;
+    padding: 2px 6px;
+    margin-left: 10px;
+    cursor: pointer;
+    vertical-align: middle; /* Align button nicely with text */
 }
 </style>

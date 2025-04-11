@@ -61,7 +61,8 @@
         <p>Loading next pair...</p>
     </section>
      <section v-else>
-        <p>Add at least two active players to start voting.</p>
+        <!-- Updated message based on new logic -->
+        <p>Add at least two active Goalies or two active Skaters (F/D) to start voting.</p>
     </section>
 
     <!-- Leaderboard -->
@@ -242,26 +243,53 @@ const deletePlayer = (playerId) => {
 // and save whenever a change occurs. Deep watch is needed for nested properties.
 watch(players, savePlayers, { deep: true });
 
-// Function to get a random pair of distinct active players
+// Function to get a random pair of distinct active players, separating goalies and skaters
 const getRandomPair = () => {
-  const availablePlayers = activePlayers.value;
-  if (availablePlayers.length < 2) {
+  const activeGoalies = activePlayers.value.filter(p => p.position === 'G');
+  const activeSkaters = activePlayers.value.filter(p => p.position !== 'G'); // F or D
+
+  const canCompareGoalies = activeGoalies.length >= 2;
+  const canCompareSkaters = activeSkaters.length >= 2;
+
+  let playersToCompare = [];
+  let comparisonType = '';
+
+  // Decide which group to compare
+  if (canCompareGoalies && canCompareSkaters) {
+    // Both possible, choose randomly
+    comparisonType = Math.random() < 0.5 ? 'Goalies' : 'Skaters';
+  } else if (canCompareGoalies) {
+    comparisonType = 'Goalies';
+  } else if (canCompareSkaters) {
+    comparisonType = 'Skaters';
+  } else {
+    // Neither comparison is possible
     playerA.value = null;
     playerB.value = null;
-    console.log("Need at least two active players to vote.");
+    console.log("Need at least two active goalies or two active skaters to vote.");
     return;
   }
 
-  let indexA = Math.floor(Math.random() * availablePlayers.length);
-  let indexB = Math.floor(Math.random() * availablePlayers.length);
+  // Select players from the chosen group
+  if (comparisonType === 'Goalies') {
+    playersToCompare = activeGoalies;
+    console.log("Comparing Goalies");
+  } else {
+    playersToCompare = activeSkaters;
+    console.log("Comparing Skaters");
+  }
+
+  // Select two distinct players from the chosen list
+  let indexA = Math.floor(Math.random() * playersToCompare.length);
+  let indexB = Math.floor(Math.random() * playersToCompare.length);
 
   // Ensure the indices are different
   while (indexA === indexB) {
-    indexB = Math.floor(Math.random() * availablePlayers.length);
+    indexB = Math.floor(Math.random() * playersToCompare.length);
   }
 
-  playerA.value = availablePlayers[indexA];
-  playerB.value = availablePlayers[indexB];
+  playerA.value = playersToCompare[indexA];
+  playerB.value = playersToCompare[indexB];
   console.log("New pair:", playerA.value?.name, "vs", playerB.value?.name); // Debug log
 };
 

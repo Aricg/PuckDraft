@@ -188,6 +188,7 @@ const addPlayer = () => {
     position: newPlayerPosition.value,
     active: true, // New players are active by default
     score: 0, // Initialize score
+    comparisonCount: 0, // Initialize comparison count
   };
   players.value.push(newPlayer);
 
@@ -210,7 +211,8 @@ const loadPlayers = async () => {
     players.value = data.map(player => ({
         ...player,
         active: player.active !== undefined ? player.active : true, // Default to active if missing
-        score: player.score !== undefined ? player.score : 0 // Default score to 0 if missing
+        score: player.score !== undefined ? player.score : 0, // Default score to 0 if missing
+        comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : 0 // Default count to 0
     }));
     getRandomPair(); // Get initial pair after loading
   } catch (error) {
@@ -289,18 +291,43 @@ const getRandomPair = () => {
     console.log("Comparing Skaters");
   }
 
-  // Select two distinct players from the chosen list
-  let indexA = Math.floor(Math.random() * playersToCompare.length);
-  let indexB = Math.floor(Math.random() * playersToCompare.length);
+  // --- Select players, prioritizing lower comparison count ---
 
-  // Ensure the indices are different
-  while (indexA === indexB) {
-    indexB = Math.floor(Math.random() * playersToCompare.length);
+  // Find the minimum comparison count among eligible players
+  const minCount = Math.min(...playersToCompare.map(p => p.comparisonCount));
+  // Get all players at the minimum count
+  const lowCountPlayers = playersToCompare.filter(p => p.comparisonCount === minCount);
+
+  // Select Player A randomly from the low-count group
+  const indexA = Math.floor(Math.random() * lowCountPlayers.length);
+  playerA.value = lowCountPlayers[indexA];
+
+  // Get the remaining players (excluding playerA)
+  const remainingPlayers = playersToCompare.filter(p => p.id !== playerA.value.id);
+
+  if (remainingPlayers.length === 0) {
+      // This should only happen if there were exactly 2 players total and they were picked
+      // Handle edge case - maybe show message or log error
+      console.error("Cannot select second player - only one remaining.");
+       playerA.value = null; // Reset pair
+       playerB.value = null;
+       return;
   }
 
-  playerA.value = playersToCompare[indexA];
-  playerB.value = playersToCompare[indexB];
-  console.log("New pair:", playerA.value?.name, "vs", playerB.value?.name); // Debug log
+  // Select Player B randomly from the remaining players
+  const indexB = Math.floor(Math.random() * remainingPlayers.length);
+  playerB.value = remainingPlayers[indexB];
+
+  // --- Increment comparison count for the selected pair ---
+  // Note: We increment when the pair is *shown*, not just when voted on.
+  // The watch(players, savePlayers) will handle saving this change.
+  const playerAInFullList = players.value.find(p => p.id === playerA.value.id);
+  const playerBInFullList = players.value.find(p => p.id === playerB.value.id);
+  if (playerAInFullList) playerAInFullList.comparisonCount++;
+  if (playerBInFullList) playerBInFullList.comparisonCount++;
+
+
+  console.log(`New pair: ${playerA.value?.name} (Count: ${playerAInFullList?.comparisonCount}) vs ${playerB.value?.name} (Count: ${playerBInFullList?.comparisonCount})`); // Debug log
 };
 
 // Function to handle voting

@@ -376,10 +376,8 @@ const generateTeams = () => {
           teamToggle = !teamToggle;
       }
     }
-  } else { // Simple toggle draft logic (A, B, A, B, ...)
-      }
-    }
   }
+  // Removed extraneous else block here
 
   // --- Calculate Skater Scores ---
   const scoreTeamA = draftTeamA.reduce((sum, player) => sum + player.score, 0);

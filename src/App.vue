@@ -38,18 +38,49 @@
       <p v-else>No players added yet.</p>
     </section>
 
-    <!-- Other components will go here -->
+    <!-- Hot or Not Voting -->
+    <section class="hot-or-not" v-if="playerA && playerB">
+      <h2>Vote for the Better Player</h2>
+      <div class="comparison">
+        <div class="player-card">
+          <h3>{{ playerA.name }}</h3>
+          <p>Position: {{ playerA.position }}</p>
+          <p>Score: {{ playerA.score }}</p>
+          <button @click="vote(playerA.id)">Vote</button>
+        </div>
+        <span class="vs">vs</span>
+        <div class="player-card">
+          <h3>{{ playerB.name }}</h3>
+          <p>Position: {{ playerB.position }}</p>
+          <p>Score: {{ playerB.score }}</p>
+          <button @click="vote(playerB.id)">Vote</button>
+        </div>
+      </div>
+    </section>
+    <section v-else-if="activePlayers.length >= 2">
+        <p>Loading next pair...</p>
+    </section>
+     <section v-else>
+        <p>Add at least two active players to start voting.</p>
+    </section>
+
+    <!-- Team Generation will go here -->
 
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 
 // Reactive state for the roster and new player form
 const players = ref([]); // Array to hold player objects { id, name, position, active }
 const newPlayerName = ref('');
 const newPlayerPosition = ref('F'); // Default position
+const playerA = ref(null); // Player for comparison A
+const playerB = ref(null); // Player for comparison B
+
+// Computed property to get only active players
+const activePlayers = computed(() => players.value.filter(p => p.active));
 
 // Function to add a new player
 const addPlayer = () => {
@@ -63,6 +94,7 @@ const addPlayer = () => {
     name: newPlayerName.value.trim(),
     position: newPlayerPosition.value,
     active: true, // New players are active by default
+    score: 0, // Initialize score
   };
   players.value.push(newPlayer);
 
@@ -81,11 +113,13 @@ const loadPlayers = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    // Ensure loaded data has the expected structure, especially 'active' flag
+    // Ensure loaded data has the expected structure, including 'active' and 'score'
     players.value = data.map(player => ({
         ...player,
-        active: player.active !== undefined ? player.active : true // Default to active if missing
+        active: player.active !== undefined ? player.active : true, // Default to active if missing
+        score: player.score !== undefined ? player.score : 0 // Default score to 0 if missing
     }));
+    getRandomPair(); // Get initial pair after loading
   } catch (error) {
     console.error("Failed to load players:", error);
     alert('Failed to load player data. Check the console for details.');
@@ -125,6 +159,59 @@ const deletePlayer = (playerId) => {
 // Watch for changes in the players array (including nested properties like 'active')
 // and save whenever a change occurs. Deep watch is needed for nested properties.
 watch(players, savePlayers, { deep: true });
+
+// Function to get a random pair of distinct active players
+const getRandomPair = () => {
+  const availablePlayers = activePlayers.value;
+  if (availablePlayers.length < 2) {
+    playerA.value = null;
+    playerB.value = null;
+    console.log("Need at least two active players to vote.");
+    return;
+  }
+
+  let indexA = Math.floor(Math.random() * availablePlayers.length);
+  let indexB = Math.floor(Math.random() * availablePlayers.length);
+
+  // Ensure the indices are different
+  while (indexA === indexB) {
+    indexB = Math.floor(Math.random() * availablePlayers.length);
+  }
+
+  playerA.value = availablePlayers[indexA];
+  playerB.value = availablePlayers[indexB];
+  console.log("New pair:", playerA.value?.name, "vs", playerB.value?.name); // Debug log
+};
+
+// Function to handle voting
+const vote = (winnerId) => {
+  if (!winnerId) return;
+
+  const winner = players.value.find(p => p.id === winnerId);
+  if (winner) {
+    winner.score++;
+    console.log(`Voted for ${winner.name}, new score: ${winner.score}`); // Debug log
+    // savePlayers() will be triggered by the watch
+  } else {
+      console.error("Winner not found for ID:", winnerId);
+  }
+
+  // Get the next pair immediately after voting
+  getRandomPair();
+};
+
+// Watch activePlayers list to get a new pair if the list changes significantly
+// (e.g., players added/removed or made inactive)
+watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
+    // Only get a new pair if the number of active players changes
+    // or if the current pair becomes invalid
+    if (newActivePlayers.length !== oldActivePlayers.length ||
+        !playerA.value || !playerB.value ||
+        !newActivePlayers.some(p => p.id === playerA.value.id) ||
+        !newActivePlayers.some(p => p.id === playerB.value.id)) {
+        getRandomPair();
+    }
+}, { deep: true }); // Deep watch might be overkill here but ensures reactivity
 
 </script>
 
@@ -190,5 +277,55 @@ watch(players, savePlayers, { deep: true });
 
 .delete-btn:hover {
   background-color: #cc0000;
+}
+
+/* Hot or Not Styling */
+.hot-or-not {
+  margin-top: 30px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.comparison {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.player-card {
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 5px;
+  width: 40%;
+  text-align: center;
+}
+
+.player-card h3 {
+  margin-top: 0;
+}
+
+.player-card button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.player-card button:hover {
+  background-color: #45a049;
+}
+
+.vs {
+  font-weight: bold;
+  font-size: 1.5em;
 }
 </style>

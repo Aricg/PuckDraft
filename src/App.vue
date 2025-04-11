@@ -256,8 +256,8 @@ const getRandomPair = () => {
 
   // Decide which group to compare
   if (canCompareGoalies && canCompareSkaters) {
-    // Both possible, choose randomly
-    comparisonType = Math.random() < 0.5 ? 'Goalies' : 'Skaters';
+    // Both possible, choose randomly, but make goalies less frequent (e.g., 10% chance)
+    comparisonType = Math.random() < 0.1 ? 'Goalies' : 'Skaters';
   } else if (canCompareGoalies) {
     comparisonType = 'Goalies';
   } else if (canCompareSkaters) {

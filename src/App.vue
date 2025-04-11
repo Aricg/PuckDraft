@@ -375,17 +375,45 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
 }, { deep: true }); // Deep watch might be overkill here but ensures reactivity
 
 
+// Helper function to generate the sequence of picking teams
+const getPickOrder = (numPicks, firstPicker, type) => {
+  const order = [];
+  let currentPicker = firstPicker;
+  const secondPicker = firstPicker === 'A' ? 'B' : 'A';
+
+  if (type === 'simple') {
+    for (let i = 0; i < numPicks; i++) {
+      order.push(currentPicker);
+      currentPicker = currentPicker === firstPicker ? secondPicker : firstPicker;
+    }
+  } else { // serpentine
+    for (let i = 0; i < numPicks; i++) {
+       // Serpentine logic: A, B, B, A, A, B, B, A ...
+       // Determine picker based on index i (0-based)
+      if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ...
+        order.push(firstPicker);
+      } else { // Picks 2, 3, 6, 7, 10, 11, ...
+        order.push(secondPicker);
+      }
+    }
+  }
+  return order;
+};
+
 // Function to generate teams using selected draft logic, drafting goalies last
 const generateTeams = () => {
-  // Separate ranked players into skaters and goalies
-  const rankedSkaters = rankedPlayers.value.filter(p => p.position !== 'G');
-  const rankedGoalies = rankedPlayers.value.filter(p => p.position === 'G').sort((a, b) => b.score - a.score); // Ensure goalies are sorted by score desc
+  // Separate ranked players into Forwards, Defensemen, and Goalies
+  const rankedForwards = rankedPlayers.value.filter(p => p.position === 'F').sort((a, b) => b.score - a.score);
+  const rankedDefensemen = rankedPlayers.value.filter(p => p.position === 'D').sort((a, b) => b.score - a.score);
+  const rankedGoalies = rankedPlayers.value.filter(p => p.position === 'G').sort((a, b) => b.score - a.score);
 
-  const numSkaters = rankedSkaters.length;
+  const numForwards = rankedForwards.length;
+  const numDefensemen = rankedDefensemen.length;
   const numGoalies = rankedGoalies.length;
+  const numSkaters = numForwards + numDefensemen; // Keep total skater count for check
 
   if (numSkaters + numGoalies < 2) {
-    alert("Need at least two active players (including goalies) to generate teams.");
+    alert("Need at least two active players (F, D, or G) to generate teams.");
     return;
   }
 
@@ -393,34 +421,42 @@ const generateTeams = () => {
   const draftTeamB = [];
   showTeams.value = true; // Show the team display section
 
-  // --- Draft Skaters ---
-  if (numSkaters > 0) {
-    if (draftType.value === 'serpentine') {
-      // Serpentine draft logic for skaters: A, B, B, A, A, B, B, ...
-      for (let i = 0; i < numSkaters; i++) {
-        const skater = rankedSkaters[i];
-        if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ... go to A
-            draftTeamA.push(skater);
-        } else { // Picks 2, 3, 6, 7, 10, 11, ... go to B
-            draftTeamB.push(skater);
-        }
-      }
-    } else { // Simple toggle draft logic for skaters (A, B, A, B, ...)
-      let teamToggle = true; // true for Team A, false for Team B
-      for (let i = 0; i < numSkaters; i++) {
-          const skater = rankedSkaters[i];
-          if (teamToggle) {
-            draftTeamA.push(skater);
+  // --- Phase 1: Draft Forwards ---
+  let firstForwardPicker = 'A'; // Team A gets first Forward pick
+  if (numForwards > 0) {
+      const forwardPickOrder = getPickOrder(numForwards, firstForwardPicker, draftType.value);
+      console.log("Forward Pick Order:", forwardPickOrder); // Debug log
+      rankedForwards.forEach((player, index) => {
+          const pickingTeam = forwardPickOrder[index];
+          if (pickingTeam === 'A') {
+              draftTeamA.push(player);
           } else {
-            draftTeamB.push(skater);
+              draftTeamB.push(player);
           }
-          teamToggle = !teamToggle;
-      }
-    }
+      });
+  } else {
+      console.log("No forwards to draft.");
   }
-  // Removed extraneous else block here
 
-  // --- Calculate Skater Scores ---
+  // --- Phase 2: Draft Defensemen ---
+  if (numDefensemen > 0) {
+      // Team B always gets the first defenseman pick in this scheme (since A got first F pick)
+      const firstDefensemanPicker = 'B';
+      const defensemanPickOrder = getPickOrder(numDefensemen, firstDefensemanPicker, draftType.value);
+      console.log("Defenseman Pick Order:", defensemanPickOrder); // Debug log
+      rankedDefensemen.forEach((player, index) => {
+          const pickingTeam = defensemanPickOrder[index];
+          if (pickingTeam === 'A') {
+              draftTeamA.push(player);
+          } else {
+              draftTeamB.push(player);
+          }
+      });
+  } else {
+      console.log("No defensemen to draft.");
+  }
+
+  // --- Calculate Skater Scores (after both F and D drafts) ---
   const scoreTeamA = draftTeamA.reduce((sum, player) => sum + player.score, 0);
   const scoreTeamB = draftTeamB.reduce((sum, player) => sum + player.score, 0);
   console.log(`Skater Scores - Team A: ${scoreTeamA}, Team B: ${scoreTeamB}`); // Debug log

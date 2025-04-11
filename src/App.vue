@@ -94,18 +94,42 @@
     <section class="teams-display" v-if="showTeams">
         <h2>Generated Teams</h2>
         <div class="teams-container">
-            <div class="team-list">
+            <div
+              class="team-list"
+              @dragover.prevent="onDragOver"
+              @dragenter.prevent="onDragEnter($event, 'A')"
+              @dragleave="onDragLeave($event, 'A')"
+              @drop="onDrop($event, 'A')"
+            >
                 <h3>Team A</h3>
                 <ul>
-                    <li v-for="player in teamA" :key="player.id">
+                    <li
+                      v-for="player in teamA"
+                      :key="player.id"
+                      draggable="true"
+                      @dragstart="onDragStart($event, player, 'A')"
+                      @dragend="onDragEnd"
+                    >
                         {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}
                     </li>
                 </ul>
             </div>
-            <div class="team-list">
+            <div
+              class="team-list"
+              @dragover.prevent="onDragOver"
+              @dragenter.prevent="onDragEnter($event, 'B')"
+              @dragleave="onDragLeave($event, 'B')"
+              @drop="onDrop($event, 'B')"
+            >
                 <h3>Team B</h3>
                 <ul>
-                     <li v-for="player in teamB" :key="player.id">
+                     <li
+                       v-for="player in teamB"
+                       :key="player.id"
+                       draggable="true"
+                       @dragstart="onDragStart($event, player, 'B')"
+                       @dragend="onDragEnd"
+                     >
                         {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}
                     </li>
                 </ul>
@@ -313,6 +337,98 @@ const generateTeams = () => {
   // Note: This basic draft doesn't explicitly balance positions yet.
 };
 
+
+// --- Drag and Drop Handlers ---
+
+const draggedPlayer = ref(null); // Store the player being dragged
+const sourceTeam = ref(null); // Store the team the player is dragged from ('A' or 'B')
+
+const onDragStart = (event, player, team) => {
+  // Set data to be transferred (player ID)
+  event.dataTransfer.setData('text/plain', player.id);
+  event.dataTransfer.effectAllowed = 'move';
+  draggedPlayer.value = player; // Keep track of the object itself
+  sourceTeam.value = team;
+  // Optional: Add a class to the dragged element for styling
+  event.target.classList.add('dragging');
+  console.log(`Drag Start: ${player.name} from Team ${team}`);
+};
+
+const onDragEnd = (event) => {
+  // Clean up styling when drag ends (successfully or cancelled)
+  event.target.classList.remove('dragging');
+  // Clear drag-over styles from potential targets
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  draggedPlayer.value = null;
+  sourceTeam.value = null;
+   console.log('Drag End');
+};
+
+
+const onDragOver = (event) => {
+  // Prevent default to allow drop
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+};
+
+const onDragEnter = (event, targetTeam) => {
+  // Add visual feedback when entering a valid drop zone
+  if (event.target.closest('.team-list') && sourceTeam.value !== targetTeam) {
+      event.target.closest('.team-list').classList.add('drag-over');
+      console.log(`Drag Enter: Team ${targetTeam}`);
+  }
+};
+
+const onDragLeave = (event, targetTeam) => {
+  // Remove visual feedback when leaving the drop zone boundary
+  // Check if the relatedTarget (where the mouse is going) is outside the current element
+   if (!event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove('drag-over');
+        console.log(`Drag Leave: Team ${targetTeam}`);
+   }
+};
+
+const onDrop = (event, targetTeam) => {
+  event.preventDefault();
+  const targetListElement = event.target.closest('.team-list');
+  if (!targetListElement) return; // Should not happen if dragover worked
+
+  targetListElement.classList.remove('drag-over'); // Remove drop zone styling
+
+  const playerId = parseInt(event.dataTransfer.getData('text/plain'), 10); // Ensure ID is number if needed
+  const playerToMove = draggedPlayer.value; // Use the stored player object
+
+  console.log(`Drop: Player ID ${playerId} onto Team ${targetTeam}, from Team ${sourceTeam.value}`);
+
+
+  // Ensure we have the player and it's not dropped onto the same team
+  if (!playerToMove || sourceTeam.value === targetTeam) {
+    console.log("Drop cancelled: Same team or no player data.");
+    return;
+  }
+
+  // Remove from source team
+  if (sourceTeam.value === 'A') {
+    teamA.value = teamA.value.filter(p => p.id !== playerToMove.id);
+  } else {
+    teamB.value = teamB.value.filter(p => p.id !== playerToMove.id);
+  }
+
+  // Add to target team
+  if (targetTeam === 'A') {
+    teamA.value.push(playerToMove);
+  } else {
+    teamB.value.push(playerToMove);
+  }
+
+  // Reset drag state
+  draggedPlayer.value = null;
+  sourceTeam.value = null;
+
+  // Note: Changes to teamA/teamB are reactive, but don't trigger savePlayers
+  // If persistence of manual swaps is needed, call savePlayers() or similar here.
+};
+
 </script>
 
 <style>
@@ -498,5 +614,21 @@ const generateTeams = () => {
   text-align: center;
   border-bottom: 1px solid #ccc;
   padding-bottom: 5px;
+}
+
+/* Drag and Drop Styling */
+.team-list li[draggable="true"] {
+  cursor: move;
+  user-select: none; /* Prevent text selection while dragging */
+}
+
+.team-list li.dragging {
+  opacity: 0.5; /* Make the dragged item semi-transparent */
+  background: #f0f0f0;
+}
+
+.team-list.drag-over {
+  background-color: #e0ffe0; /* Highlight drop zone */
+  border-style: dashed;
 }
 </style>

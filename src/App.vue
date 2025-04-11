@@ -441,11 +441,16 @@ const generateTeams = () => {
     }
   }
 
-  // Assign the final drafted teams to the reactive refs
+  // --- Sort teams by position (F > D > G) before final assignment ---
+  const positionOrder = { 'F': 1, 'D': 2, 'G': 3 };
+  draftTeamA.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+  draftTeamB.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+
+  // Assign the final sorted drafted teams to the reactive refs
   teamA.value = draftTeamA;
   teamB.value = draftTeamB;
 
-  console.log("Final Teams Generated:", teamA.value, teamB.value); // Debug log
+  console.log("Final Sorted Teams Generated:", teamA.value, teamB.value); // Debug log
 };
 
 

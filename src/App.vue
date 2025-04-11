@@ -78,6 +78,15 @@
     <!-- Team Generation Trigger -->
      <section class="team-generation">
         <h2>Generate Teams</h2>
+        <div class="draft-options">
+          <label>Draft Type:</label>
+          <label>
+            <input type="radio" value="serpentine" v-model="draftType"> Serpentine (A, B, B, A)
+          </label>
+          <label>
+            <input type="radio" value="simple" v-model="draftType"> Simple (A, B, A, B)
+          </label>
+        </div>
         <button @click="generateTeams" :disabled="activePlayers.length < 2">Generate Balanced Teams</button>
      </section>
 
@@ -120,6 +129,7 @@ const playerB = ref(null); // Player for comparison B
 const teamA = ref([]); // Generated Team A
 const teamB = ref([]); // Generated Team B
 const showTeams = ref(false); // Flag to control team display
+const draftType = ref('serpentine'); // 'serpentine' or 'simple'
 
 // Computed property to get only active players
 const activePlayers = computed(() => players.value.filter(p => p.active));
@@ -276,24 +286,27 @@ const generateTeams = () => {
   teamB.value = [];
   showTeams.value = true; // Show the team display section
 
-  let teamToggle = true; // true for Team A, false for Team B
-
-  for (let i = 0; i < numPlayers; i++) {
-    const player = playersToDraft[i];
-
+  if (draftType.value === 'serpentine') {
     // Serpentine draft logic: A, B, B, A, A, B, B, ...
-    if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ... go to A
-        teamA.value.push(player);
-    } else { // Picks 2, 3, 6, 7, 10, 11, ... go to B
-        teamB.value.push(player);
+    for (let i = 0; i < numPlayers; i++) {
+      const player = playersToDraft[i];
+      if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ... go to A
+          teamA.value.push(player);
+      } else { // Picks 2, 3, 6, 7, 10, 11, ... go to B
+          teamB.value.push(player);
+      }
     }
-    // Simple toggle draft logic (A, B, A, B, ...) - uncomment below to use instead
-    // if (teamToggle) {
-    //   teamA.value.push(player);
-    // } else {
-    //   teamB.value.push(player);
-    // }
-    // teamToggle = !teamToggle;
+  } else { // Simple toggle draft logic (A, B, A, B, ...)
+    let teamToggle = true; // true for Team A, false for Team B
+    for (let i = 0; i < numPlayers; i++) {
+        const player = playersToDraft[i];
+        if (teamToggle) {
+          teamA.value.push(player);
+        } else {
+          teamB.value.push(player);
+        }
+        teamToggle = !teamToggle;
+    }
   }
 
   console.log("Teams Generated:", teamA.value, teamB.value); // Debug log
@@ -456,6 +469,15 @@ const generateTeams = () => {
 
 .team-generation button:hover:not(:disabled) {
   background-color: #0056b3;
+}
+
+.draft-options {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.draft-options label {
+  margin: 0 10px;
 }
 
 .teams-container {

@@ -334,45 +334,79 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
 }, { deep: true }); // Deep watch might be overkill here but ensures reactivity
 
 
-// Function to generate teams using serpentine draft based on score ranking
+// Function to generate teams using selected draft logic, drafting goalies last
 const generateTeams = () => {
-  const playersToDraft = rankedPlayers.value; // Use the computed ranked list
-  const numPlayers = playersToDraft.length;
+  // Separate ranked players into skaters and goalies
+  const rankedSkaters = rankedPlayers.value.filter(p => p.position !== 'G');
+  const rankedGoalies = rankedPlayers.value.filter(p => p.position === 'G').sort((a, b) => b.score - a.score); // Ensure goalies are sorted by score desc
 
-  if (numPlayers < 2) {
-    alert("Need at least two active players to generate teams.");
+  const numSkaters = rankedSkaters.length;
+  const numGoalies = rankedGoalies.length;
+
+  if (numSkaters + numGoalies < 2) {
+    alert("Need at least two active players (including goalies) to generate teams.");
     return;
   }
 
-  teamA.value = [];
-  teamB.value = [];
+  const draftTeamA = [];
+  const draftTeamB = [];
   showTeams.value = true; // Show the team display section
 
-  if (draftType.value === 'serpentine') {
-    // Serpentine draft logic: A, B, B, A, A, B, B, ...
-    for (let i = 0; i < numPlayers; i++) {
-      const player = playersToDraft[i];
-      if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ... go to A
-          teamA.value.push(player);
-      } else { // Picks 2, 3, 6, 7, 10, 11, ... go to B
-          teamB.value.push(player);
+  // --- Draft Skaters ---
+  if (numSkaters > 0) {
+    if (draftType.value === 'serpentine') {
+      // Serpentine draft logic for skaters: A, B, B, A, A, B, B, ...
+      for (let i = 0; i < numSkaters; i++) {
+        const skater = rankedSkaters[i];
+        if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ... go to A
+            draftTeamA.push(skater);
+        } else { // Picks 2, 3, 6, 7, 10, 11, ... go to B
+            draftTeamB.push(skater);
+        }
+      }
+    } else { // Simple toggle draft logic for skaters (A, B, A, B, ...)
+      let teamToggle = true; // true for Team A, false for Team B
+      for (let i = 0; i < numSkaters; i++) {
+          const skater = rankedSkaters[i];
+          if (teamToggle) {
+            draftTeamA.push(skater);
+          } else {
+            draftTeamB.push(skater);
+          }
+          teamToggle = !teamToggle;
       }
     }
   } else { // Simple toggle draft logic (A, B, A, B, ...)
-    let teamToggle = true; // true for Team A, false for Team B
-    for (let i = 0; i < numPlayers; i++) {
-        const player = playersToDraft[i];
-        if (teamToggle) {
-          teamA.value.push(player);
-        } else {
-          teamB.value.push(player);
-        }
-        teamToggle = !teamToggle;
+      }
     }
   }
 
-  console.log("Teams Generated:", teamA.value, teamB.value); // Debug log
-  // Note: This basic draft doesn't explicitly balance positions yet.
+  // --- Calculate Skater Scores ---
+  const scoreTeamA = draftTeamA.reduce((sum, player) => sum + player.score, 0);
+  const scoreTeamB = draftTeamB.reduce((sum, player) => sum + player.score, 0);
+  console.log(`Skater Scores - Team A: ${scoreTeamA}, Team B: ${scoreTeamB}`); // Debug log
+
+  // --- Draft Goalies ---
+  if (numGoalies > 0) {
+    let goalieTeamToggle = scoreTeamA <= scoreTeamB; // Assign first goalie to lower score team (or A if equal)
+
+    for (const goalie of rankedGoalies) {
+      if (goalieTeamToggle) {
+        draftTeamA.push(goalie); // Add goalie to the end
+        console.log(`Assigning goalie ${goalie.name} to Team A`); // Debug log
+      } else {
+        draftTeamB.push(goalie); // Add goalie to the end
+        console.log(`Assigning goalie ${goalie.name} to Team B`); // Debug log
+      }
+      goalieTeamToggle = !goalieTeamToggle; // Alternate for next goalie
+    }
+  }
+
+  // Assign the final drafted teams to the reactive refs
+  teamA.value = draftTeamA;
+  teamB.value = draftTeamB;
+
+  console.log("Final Teams Generated:", teamA.value, teamB.value); // Debug log
 };
 
 

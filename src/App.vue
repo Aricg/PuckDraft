@@ -24,7 +24,12 @@
 
     <!-- Roster View -->
     <section class="roster">
-      <h2>Roster</h2>
+      <h2>
+        Roster
+        <span class="player-count" :class="{ 'count-over-limit': activeSkaterCount > 20 }">
+          (Active Skaters: {{ activeSkaterCount }})
+        </span>
+      </h2>
       <ul v-if="players.length > 0">
         <li v-for="player in players" :key="player.id" :class="{ inactive: !player.active }">
           <span>{{ player.name }} ({{ player.position }})</span>
@@ -158,6 +163,11 @@ const draftType = ref('serpentine'); // 'serpentine' or 'simple'
 
 // Computed property to get only active players
 const activePlayers = computed(() => players.value.filter(p => p.active));
+
+// Computed property to count active skaters (non-goalies)
+const activeSkaterCount = computed(() => {
+    return activePlayers.value.filter(p => p.position !== 'G').length;
+});
 
 // Computed property for ranked leaderboard (active players sorted by score)
 const rankedPlayers = computed(() => {
@@ -658,5 +668,18 @@ const onDrop = (event, targetTeam) => {
 .team-list.drag-over {
   background-color: #e0ffe0; /* Highlight drop zone */
   border-style: dashed;
+}
+
+/* Player Count Styling */
+.player-count {
+  font-size: 0.8em;
+  font-weight: normal;
+  margin-left: 10px;
+  color: #555; /* Default color */
+}
+
+.player-count.count-over-limit {
+  color: red;
+  font-weight: bold;
 }
 </style>

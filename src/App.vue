@@ -85,8 +85,7 @@
         </ul>
         <p v-if="isLeaderboardVisible && rankedPlayers.length === 0">No active players to rank.</p>
         <p v-else-if="!isLeaderboardVisible">Leaderboard is hidden.</p>
-        </ul>
-        <p v-else>No active players to rank.</p>
+        <!-- Removed extra </ul> and misplaced <p v-else> here -->
     </section>
 
     <!-- Team Generation Trigger -->

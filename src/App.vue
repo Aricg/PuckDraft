@@ -26,8 +26,8 @@
     <section class="roster">
       <h2>
         Roster
-        <span class="player-count" :class="{ 'count-over-limit': activeSkaterCount > 20 }">
-          (Active Skaters: {{ activeSkaterCount }})
+        <span class="player-count">
+          (F: {{ activeForwardCount }} | D: {{ activeDefenseCount }} | G: {{ activeGoalieCount }})
         </span>
       </h2>
       <ul v-if="players.length > 0">
@@ -172,9 +172,15 @@ const isLeaderboardVisible = ref(false); // Control leaderboard visibility
 // Computed property to get only active players
 const activePlayers = computed(() => players.value.filter(p => p.active));
 
-// Computed property to count active skaters (non-goalies)
-const activeSkaterCount = computed(() => {
-    return activePlayers.value.filter(p => p.position !== 'G').length;
+// Computed properties for active player counts by position
+const activeForwardCount = computed(() => {
+    return activePlayers.value.filter(p => p.position === 'F').length;
+});
+const activeDefenseCount = computed(() => {
+    return activePlayers.value.filter(p => p.position === 'D').length;
+});
+const activeGoalieCount = computed(() => {
+    return activePlayers.value.filter(p => p.position === 'G').length;
 });
 
 // Computed property for ranked leaderboard (active players sorted by score)
@@ -747,7 +753,6 @@ const onDrop = (event, targetTeam) => {
 
 .player-count.count-over-limit {
   color: red;
-  font-weight: bold;
 }
 
 /* Toggle Button Styling */

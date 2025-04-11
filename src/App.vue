@@ -32,7 +32,7 @@
             <input type="checkbox" v-model="player.active">
             Active
           </label>
-          <!-- TODO: Add remove player functionality -->
+          <button @click="deletePlayer(player.id)" class="delete-btn">Delete</button>
         </li>
       </ul>
       <p v-else>No players added yet.</p>
@@ -74,6 +74,12 @@ const addPlayer = () => {
 };
 
 // TODO: Add function to load players from data/players.json on component mount
+
+// Function to delete a player
+const deletePlayer = (playerId) => {
+  players.value = players.value.filter(player => player.id !== playerId);
+  // TODO: Persist players array after deletion
+};
 </script>
 
 <style>
@@ -123,5 +129,20 @@ const addPlayer = () => {
 
 .roster li:last-child {
   border-bottom: none;
+}
+
+.delete-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin-left: 10px; /* Add some space between checkbox and button */
+}
+
+.delete-btn:hover {
+  background-color: #cc0000;
 }
 </style>

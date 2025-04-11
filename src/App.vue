@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
 // Reactive state for the roster and new player form
 const players = ref([]); // Array to hold player objects { id, name, position, active }
@@ -70,16 +70,62 @@ const addPlayer = () => {
   newPlayerName.value = '';
   newPlayerPosition.value = 'F';
 
-  // TODO: Persist players array (e.g., save to data/players.json)
+  savePlayers(); // Save after adding
 };
 
-// TODO: Add function to load players from data/players.json on component mount
+// Function to load players from the backend API
+const loadPlayers = async () => {
+  try {
+    const response = await fetch('/api/players');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    // Ensure loaded data has the expected structure, especially 'active' flag
+    players.value = data.map(player => ({
+        ...player,
+        active: player.active !== undefined ? player.active : true // Default to active if missing
+    }));
+  } catch (error) {
+    console.error("Failed to load players:", error);
+    alert('Failed to load player data. Check the console for details.');
+    players.value = []; // Reset to empty array on error
+  }
+};
+
+// Function to save players to the backend API
+const savePlayers = async () => {
+  try {
+    const response = await fetch('/api/players', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(players.value),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    // console.log('Players saved successfully'); // Optional: for debugging
+  } catch (error) {
+    console.error("Failed to save players:", error);
+    alert('Failed to save player data. Check the console for details.');
+  }
+};
+
+// Load players when the component is mounted
+onMounted(loadPlayers);
 
 // Function to delete a player
 const deletePlayer = (playerId) => {
   players.value = players.value.filter(player => player.id !== playerId);
-  // TODO: Persist players array after deletion
+  savePlayers(); // Save after deleting
 };
+
+// Watch for changes in the players array (including nested properties like 'active')
+// and save whenever a change occurs. Deep watch is needed for nested properties.
+watch(players, savePlayers, { deep: true });
+
 </script>
 
 <style>

@@ -1,6 +1,9 @@
 <template>
-  <div id="app">
-    <h1>Team Balancer</h1>
+  <div id="app" :class="{ 'dark-theme': isDarkMode }">
+    <h1>FNHL beer league</h1>
+    <button @click="toggleTheme" class="theme-toggle-btn">
+      {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
+    </button>
 
     <!-- Add Player Form -->
     <section class="player-form">
@@ -168,6 +171,26 @@ const teamB = ref([]); // Generated Team B
 const showTeams = ref(false); // Flag to control team display
 const draftType = ref('serpentine'); // 'serpentine' or 'simple'
 const isLeaderboardVisible = ref(false); // Control leaderboard visibility
+const isDarkMode = ref(false); // Control dark mode
+
+// Function to toggle dark mode
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value;
+  // Optional: Persist theme preference in localStorage
+  // localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
+};
+
+// Optional: Load theme preference on mount
+// onMounted(() => {
+//   const savedTheme = localStorage.getItem('theme');
+//   if (savedTheme) {
+//     isDarkMode.value = savedTheme === 'dark';
+//   } else {
+//     // Optional: Check system preference
+//     isDarkMode.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+//   }
+// });
+
 
 // Computed property to get only active players
 const activePlayers = computed(() => players.value.filter(p => p.active));
@@ -585,21 +608,69 @@ const onDrop = (event, targetTeam) => {
 
 <style>
 /* Global styles can go here */
+:root {
+  /* Light Theme Variables */
+  --bg-color: #ffffff;
+  --text-color: #2c3e50;
+  --border-color: #ccc;
+  --section-bg-color: #f9f9f9;
+  --section-border-color: #eee;
+  --button-bg-color: #007bff;
+  --button-text-color: #ffffff;
+  --button-hover-bg-color: #0056b3;
+  --delete-button-bg-color: #ff4d4d;
+  --delete-button-hover-bg-color: #cc0000;
+  --vote-button-bg-color: #4CAF50;
+  --vote-button-hover-bg-color: #45a049;
+  --inactive-text-color: #aaa;
+  --drag-over-bg-color: #e0ffe0;
+  --dragging-bg-color: #f0f0f0;
+  --header-border-color: #ccc;
+}
+
+.dark-theme {
+  /* Dark Theme Variables */
+  --bg-color: #1e1e1e;
+  --text-color: #e0e0e0;
+  --border-color: #555;
+  --section-bg-color: #2a2a2a;
+  --section-border-color: #444;
+  --button-bg-color: #007bff; /* Keep buttons bright or adjust as needed */
+  --button-text-color: #ffffff;
+  --button-hover-bg-color: #3395ff;
+  --delete-button-bg-color: #ff4d4d;
+  --delete-button-hover-bg-color: #ff7070;
+  --vote-button-bg-color: #4CAF50;
+  --vote-button-hover-bg-color: #6fbf73;
+  --inactive-text-color: #777;
+  --drag-over-bg-color: #3a4a3a;
+  --dragging-bg-color: #333;
+  --header-border-color: #555;
+}
+
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-height: 100vh; /* Ensure background covers full height */
+  padding-top: 60px; /* Adjust if needed */
+  box-sizing: border-box;
+  transition: background-color 0.3s, color 0.3s; /* Smooth transition */
 }
 
-/* Basic Styling */
-.player-form, .roster {
-  margin-bottom: 20px;
+/* Basic Styling using variables */
+.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display {
+  margin: 20px auto; /* Center sections */
+  max-width: 800px; /* Limit width for better readability */
   padding: 15px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
+  background-color: var(--section-bg-color);
   border-radius: 5px;
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .player-form div {
@@ -620,12 +691,12 @@ const onDrop = (event, targetTeam) => {
   justify-content: space-between;
   align-items: center;
   padding: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--section-border-color);
 }
 
 .roster li.inactive span {
   text-decoration: line-through;
-  color: #aaa;
+  color: var(--inactive-text-color);
 }
 
 .roster li:last-child {
@@ -633,8 +704,8 @@ const onDrop = (event, targetTeam) => {
 }
 
 .delete-btn {
-  background-color: #ff4d4d;
-  color: white;
+  background-color: var(--delete-button-bg-color);
+  color: var(--button-text-color);
   border: none;
   padding: 3px 8px;
   border-radius: 3px;
@@ -644,7 +715,7 @@ const onDrop = (event, targetTeam) => {
 }
 
 .delete-btn:hover {
-  background-color: #cc0000;
+  background-color: var(--delete-button-hover-bg-color);
 }
 
 /* Hot or Not Styling */
@@ -663,7 +734,8 @@ const onDrop = (event, targetTeam) => {
 }
 
 .player-card {
-  border: 1px solid #eee;
+  border: 1px solid var(--section-border-color);
+  background-color: var(--bg-color); /* Match app background or keep section */
   padding: 15px;
   border-radius: 5px;
   width: 40%;
@@ -675,8 +747,8 @@ const onDrop = (event, targetTeam) => {
 }
 
 .player-card button {
-  background-color: #4CAF50;
-  color: white;
+  background-color: var(--vote-button-bg-color);
+  color: var(--button-text-color);
   border: none;
   padding: 10px 15px;
   text-align: center;
@@ -689,7 +761,7 @@ const onDrop = (event, targetTeam) => {
 }
 
 .player-card button:hover {
-  background-color: #45a049;
+  background-color: var(--vote-button-hover-bg-color);
 }
 
 .vs {
@@ -713,30 +785,43 @@ const onDrop = (event, targetTeam) => {
 
 .leaderboard li, .team-list li {
   padding: 5px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--section-border-color);
 }
 
 .leaderboard li:last-child, .team-list li:last-child {
   border-bottom: none;
 }
 
-.team-generation button {
-  background-color: #007bff;
-  color: white;
+/* General Button Styling */
+button {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 8px 15px;
   border: none;
-  padding: 10px 20px;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+
+/* Specific Button Types */
+.player-form button[type="submit"],
+.team-generation button {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+  padding: 10px 20px; /* Keep specific padding if needed */
+  font-size: 16px; /* Keep specific font size if needed */
   font-size: 16px;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .team-generation button:disabled {
-  background-color: #cccccc;
+  background-color: var(--border-color); /* Use border color for disabled state */
+  color: var(--inactive-text-color);
   cursor: not-allowed;
 }
 
 .team-generation button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--button-hover-bg-color);
 }
 
 .draft-options {
@@ -756,7 +841,8 @@ const onDrop = (event, targetTeam) => {
 
 .team-list {
   width: 45%;
-  border: 1px solid #eee;
+  border: 1px solid var(--section-border-color);
+  background-color: var(--bg-color); /* Match app background or keep section */
   padding: 10px;
   border-radius: 5px;
 }
@@ -764,7 +850,7 @@ const onDrop = (event, targetTeam) => {
 .team-list h3 {
   margin-top: 0;
   text-align: center;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--header-border-color);
   padding-bottom: 5px;
 }
 
@@ -776,12 +862,13 @@ const onDrop = (event, targetTeam) => {
 
 .team-list li.dragging {
   opacity: 0.5; /* Make the dragged item semi-transparent */
-  background: #f0f0f0;
+  background: var(--dragging-bg-color);
 }
 
 .team-list.drag-over {
-  background-color: #e0ffe0; /* Highlight drop zone */
+  background-color: var(--drag-over-bg-color); /* Highlight drop zone */
   border-style: dashed;
+  border-color: var(--vote-button-bg-color); /* Use an accent color for dashed border */
 }
 
 /* Player Count Styling */
@@ -789,19 +876,31 @@ const onDrop = (event, targetTeam) => {
   font-size: 0.8em;
   font-weight: normal;
   margin-left: 10px;
-  color: #555; /* Default color */
+  color: var(--text-color); /* Use main text color */
+  opacity: 0.8; /* Slightly dimmer */
 }
 
-.player-count.count-over-limit {
-  color: red;
-}
+/* Removed count-over-limit styling as it was removed earlier */
 
 /* Toggle Button Styling */
 .toggle-btn {
     font-size: 0.6em;
     padding: 2px 6px;
     margin-left: 10px;
-    cursor: pointer;
     vertical-align: middle; /* Align button nicely with text */
+    background-color: var(--section-bg-color); /* Match section background */
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.theme-toggle-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 10px;
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    z-index: 10; /* Ensure it's above other content */
 }
 </style>

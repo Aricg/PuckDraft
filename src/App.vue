@@ -64,7 +64,46 @@
         <p>Add at least two active players to start voting.</p>
     </section>
 
-    <!-- Team Generation will go here -->
+    <!-- Leaderboard -->
+    <section class="leaderboard">
+        <h2>Player Leaderboard (Active Players)</h2>
+        <ul v-if="rankedPlayers.length > 0">
+            <li v-for="(player, index) in rankedPlayers" :key="player.id">
+                <span>{{ index + 1 }}. {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}</span>
+            </li>
+        </ul>
+        <p v-else>No active players to rank.</p>
+    </section>
+
+    <!-- Team Generation Trigger -->
+     <section class="team-generation">
+        <h2>Generate Teams</h2>
+        <button @click="generateTeams" :disabled="activePlayers.length < 2">Generate Balanced Teams</button>
+     </section>
+
+    <!-- Generated Teams Display -->
+    <section class="teams-display" v-if="showTeams">
+        <h2>Generated Teams</h2>
+        <div class="teams-container">
+            <div class="team-list">
+                <h3>Team A</h3>
+                <ul>
+                    <li v-for="player in teamA" :key="player.id">
+                        {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}
+                    </li>
+                </ul>
+            </div>
+            <div class="team-list">
+                <h3>Team B</h3>
+                <ul>
+                     <li v-for="player in teamB" :key="player.id">
+                        {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+         <!-- TODO: Add option to save results -->
+    </section>
 
   </div>
 </template>
@@ -78,9 +117,18 @@ const newPlayerName = ref('');
 const newPlayerPosition = ref('F'); // Default position
 const playerA = ref(null); // Player for comparison A
 const playerB = ref(null); // Player for comparison B
+const teamA = ref([]); // Generated Team A
+const teamB = ref([]); // Generated Team B
+const showTeams = ref(false); // Flag to control team display
 
 // Computed property to get only active players
 const activePlayers = computed(() => players.value.filter(p => p.active));
+
+// Computed property for ranked leaderboard (active players sorted by score)
+const rankedPlayers = computed(() => {
+  // Create a copy before sorting to avoid mutating the original source
+  return [...activePlayers.value].sort((a, b) => b.score - a.score);
+});
 
 // Function to add a new player
 const addPlayer = () => {
@@ -213,6 +261,45 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
     }
 }, { deep: true }); // Deep watch might be overkill here but ensures reactivity
 
+
+// Function to generate teams using serpentine draft based on score ranking
+const generateTeams = () => {
+  const playersToDraft = rankedPlayers.value; // Use the computed ranked list
+  const numPlayers = playersToDraft.length;
+
+  if (numPlayers < 2) {
+    alert("Need at least two active players to generate teams.");
+    return;
+  }
+
+  teamA.value = [];
+  teamB.value = [];
+  showTeams.value = true; // Show the team display section
+
+  let teamToggle = true; // true for Team A, false for Team B
+
+  for (let i = 0; i < numPlayers; i++) {
+    const player = playersToDraft[i];
+
+    // Serpentine draft logic: A, B, B, A, A, B, B, ...
+    if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ... go to A
+        teamA.value.push(player);
+    } else { // Picks 2, 3, 6, 7, 10, 11, ... go to B
+        teamB.value.push(player);
+    }
+    // Simple toggle draft logic (A, B, A, B, ...) - uncomment below to use instead
+    // if (teamToggle) {
+    //   teamA.value.push(player);
+    // } else {
+    //   teamB.value.push(player);
+    // }
+    // teamToggle = !teamToggle;
+  }
+
+  console.log("Teams Generated:", teamA.value, teamB.value); // Debug log
+  // Note: This basic draft doesn't explicitly balance positions yet.
+};
+
 </script>
 
 <style>
@@ -327,5 +414,67 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
 .vs {
   font-weight: bold;
   font-size: 1.5em;
+}
+
+/* Leaderboard, Team Generation, and Teams Display Styling */
+.leaderboard, .team-generation, .teams-display {
+  margin-top: 30px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.leaderboard ul, .team-list ul {
+  list-style: none;
+  padding: 0;
+  text-align: left; /* Align player names left */
+}
+
+.leaderboard li, .team-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.leaderboard li:last-child, .team-list li:last-child {
+  border-bottom: none;
+}
+
+.team-generation button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.team-generation button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.team-generation button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.teams-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
+}
+
+.team-list {
+  width: 45%;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.team-list h3 {
+  margin-top: 0;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
 }
 </style>

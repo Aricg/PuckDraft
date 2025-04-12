@@ -537,7 +537,8 @@ const generateTeams = () => {
 
   // --- Phase 3: Draft Goalies ---
   if (numGoalies > 0) {
-    let goalieTeamToggle = scoreTeamA <= scoreTeamB; // Assign first goalie to lower score team (or A if equal)
+    // Assign first goalie to the team with lower total skater WINS (or A if equal)
+    let goalieTeamToggle = winsTeamA <= winsTeamB;
 
     for (const goalie of rankedGoalies) {
       if (goalieTeamToggle) {

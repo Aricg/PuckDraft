@@ -57,7 +57,7 @@
 
     <!-- Hot or Not Voting -->
     <section class="hot-or-not" v-if="playerA && playerB">
-      <h2>Vote for the Better Player</h2>
+      <h2>Top Pick?</h2>
       <div class="comparison">
         <div class="player-card">
           <h3>{{ playerA.name }}</h3>

@@ -62,16 +62,14 @@
         <div class="player-card">
           <h3>{{ playerA.name }}</h3>
           <p>Position: {{ playerA.position }}</p>
-          <p>Record: {{ playerA.wins }} W / {{ playerA.losses }} L</p>
-          <p>Ratio: {{ (calculateWinRatio(playerA) * 100).toFixed(1) }}%</p>
+          <!-- Record and Ratio hidden -->
           <button @click="vote(playerA.id)">Vote</button>
         </div>
         <span class="vs">vs</span>
         <div class="player-card">
           <h3>{{ playerB.name }}</h3>
           <p>Position: {{ playerB.position }}</p>
-          <p>Record: {{ playerB.wins }} W / {{ playerB.losses }} L</p>
-          <p>Ratio: {{ (calculateWinRatio(playerB) * 100).toFixed(1) }}%</p>
+          <!-- Record and Ratio hidden -->
           <button @click="vote(playerB.id)">Vote</button>
         </div>
       </div>

@@ -1,1 +1,182 @@
-[]
+[
+  {
+    "id": 1715700001001,
+    "name": "Liam Johnson",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001002,
+    "name": "Noah Smith",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001003,
+    "name": "Oliver Brown",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001004,
+    "name": "Elijah Jones",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001005,
+    "name": "James Williams",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001006,
+    "name": "William Davis",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001007,
+    "name": "Henry Miller",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001008,
+    "name": "Lucas Wilson",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001009,
+    "name": "Benjamin Moore",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001010,
+    "name": "Theodore Taylor",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001011,
+    "name": "Mateo Anderson",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001012,
+    "name": "Ethan Thomas",
+    "position": "F",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001013,
+    "name": "Alexander Jackson",
+    "position": "D",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001014,
+    "name": "Michael White",
+    "position": "D",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001015,
+    "name": "Daniel Harris",
+    "position": "D",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001016,
+    "name": "Jacob Martin",
+    "position": "D",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001017,
+    "name": "Logan Thompson",
+    "position": "D",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001018,
+    "name": "Jackson Garcia",
+    "position": "D",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001019,
+    "name": "Levi Martinez",
+    "position": "G",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  },
+  {
+    "id": 1715700001020,
+    "name": "Sebastian Robinson",
+    "position": "G",
+    "active": true,
+    "wins": 0,
+    "losses": 0,
+    "comparisonCount": 0
+  }
+]

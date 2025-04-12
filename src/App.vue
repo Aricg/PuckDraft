@@ -35,7 +35,16 @@
       </h2>
       <ul v-if="players.length > 0">
         <li v-for="player in players" :key="player.id" :class="{ inactive: !player.active }">
-          <span>{{ player.name }} ({{ player.position }})</span>
+          <span>
+            {{ player.name }}
+            <!-- Static display for Goalies -->
+            <span v-if="player.position === 'G'"> (G)</span>
+            <!-- Dropdown for F/D -->
+            <select v-else v-model="player.position" class="position-select">
+              <option value="F">F</option>
+              <option value="D">D</option>
+            </select>
+          </span>
           <label>
             <input type="checkbox" v-model="player.active">
             Active
@@ -954,5 +963,16 @@ button {
     color: var(--text-color);
     border: 1px solid var(--border-color);
     z-index: 10; /* Ensure it's above other content */
+}
+
+/* Styling for the position dropdown in the roster */
+.position-select {
+  margin-left: 5px; /* Add some space after the name */
+  padding: 1px 3px;
+  font-size: 0.9em;
+  background-color: var(--bg-color); /* Match background */
+  color: var(--text-color); /* Match text color */
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
 }
 </style>

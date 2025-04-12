@@ -1,14 +1,455 @@
 <template>
   <div id="app" :class="{ 'dark-theme': isDarkMode }">
-    <h1>FNHL beer league</h1>
-    <button @click="toggleTheme" class="theme-toggle-btn">
-      {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
-    </button>
+    <header class="app-header">
+      <h1>FNHL beer league</h1>
+      <nav>
+        <router-link to="/">Home</router-link> |
+        <router-link to="/leader">Leaderboard</router-link>
+      </nav>
+      <button @click="toggleTheme" class="theme-toggle-btn">
+        {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
+      </button>
+    </header>
 
-    <!-- Add Player Form -->
-    <section class="player-form">
-      <h2>Add New Player</h2>
-      <form @submit.prevent="addPlayer">
+    <main>
+      <!-- Router view renders the component for the current route -->
+      <router-view />
+    </main>
+
+    <!-- Removed specific sections like player-form, roster, etc. -->
+    <!-- They are now in src/views/Home.vue and src/views/Leaderboard.vue -->
+
+  </div>
+</template>
+
+<script setup>
+// Keep only the state and logic needed across all routes or for App.vue itself
+import { ref, onMounted, watch, computed, provide } from 'vue';
+
+// --- Core State ---
+const players = ref([]); // Master list of players
+const isDarkMode = ref(false); // Theme control
+
+// --- State needed by child components (will be provided) ---
+const newPlayerName = ref('');
+const newPlayerPosition = ref('F');
+const playerA = ref(null);
+const playerB = ref(null);
+const teamA = ref([]);
+const teamB = ref([]);
+const showTeams = ref(false);
+const draftType = ref('serpentine');
+const draggedPlayer = ref(null);
+const sourceTeam = ref(null);
+
+// --- Theme Toggle ---
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value;
+};
+
+// --- Computed Properties (some provided) ---
+const activePlayers = computed(() => players.value.filter(p => p.active));
+const activeForwardCount = computed(() => activePlayers.value.filter(p => p.position === 'F').length);
+const activeDefenseCount = computed(() => activePlayers.value.filter(p => p.position === 'D').length);
+const activeGoalieCount = computed(() => activePlayers.value.filter(p => p.position === 'G').length);
+
+const calculateWinRatio = (player) => {
+  const totalGames = player.wins + player.losses;
+  if (totalGames === 0) return 0;
+  return player.wins / totalGames;
+};
+
+const rankedPlayers = computed(() => {
+  return [...activePlayers.value].sort((a, b) => {
+      const ratioB = calculateWinRatio(b);
+      const ratioA = calculateWinRatio(a);
+      if (ratioB !== ratioA) return ratioB - ratioA;
+      const totalGamesB = b.wins + b.losses;
+      const totalGamesA = a.wins + a.losses;
+      if (totalGamesB !== totalGamesA) return totalGamesB - totalGamesA;
+      return b.wins - a.wins;
+  });
+});
+
+
+// --- Core Methods (some provided) ---
+
+const addPlayer = () => {
+  if (newPlayerName.value.trim() === '') {
+    alert('Player name cannot be empty.');
+    return;
+  }
+  const newPlayer = {
+    id: Date.now(),
+    name: newPlayerName.value.trim(),
+    position: newPlayerPosition.value,
+    active: true,
+    wins: 0,
+    losses: 0,
+    comparisonCount: 0,
+  };
+  players.value.push(newPlayer);
+  newPlayerName.value = '';
+  newPlayerPosition.value = 'F';
+  // savePlayers() will be called by the watch
+};
+
+const deletePlayer = (playerId) => {
+  players.value = players.value.filter(player => player.id !== playerId);
+  // savePlayers() will be called by the watch
+};
+
+const loadPlayers = async () => {
+  try {
+    const response = await fetch('/api/players');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    players.value = data.map(player => {
+        const wins = player.wins !== undefined ? player.wins : (player.score !== undefined ? player.score : 0);
+        const losses = player.losses !== undefined ? player.losses : 0;
+        return {
+            ...player,
+            active: player.active !== undefined ? player.active : true,
+            wins: wins,
+            losses: losses,
+            comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : (wins + losses),
+            score: undefined
+        };
+    }).filter(player => player.id !== undefined);
+    getRandomPair(); // Still need to get initial pair if on home page
+  } catch (error) {
+    console.error("Failed to load players:", error);
+    alert('Failed to load player data. Check the console for details.');
+    players.value = [];
+  }
+};
+
+const savePlayers = async () => {
+  try {
+    const response = await fetch('/api/players', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(players.value),
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  } catch (error) {
+    console.error("Failed to save players:", error);
+    alert('Failed to save player data. Check the console for details.');
+  }
+};
+
+onMounted(loadPlayers);
+watch(players, savePlayers, { deep: true });
+
+
+const getRandomPair = () => {
+  const activeGoalies = activePlayers.value.filter(p => p.position === 'G');
+  const activeSkaters = activePlayers.value.filter(p => p.position !== 'G');
+  const canCompareGoalies = activeGoalies.length >= 2;
+  const canCompareSkaters = activeSkaters.length >= 2;
+  let playersToCompare = [];
+  let comparisonType = '';
+
+  if (canCompareGoalies && canCompareSkaters) {
+    comparisonType = Math.random() < 0.1 ? 'Goalies' : 'Skaters';
+  } else if (canCompareGoalies) {
+    comparisonType = 'Goalies';
+  } else if (canCompareSkaters) {
+    comparisonType = 'Skaters';
+  } else {
+    playerA.value = null; playerB.value = null; return;
+  }
+
+  playersToCompare = comparisonType === 'Goalies' ? activeGoalies : activeSkaters;
+  const minCount = Math.min(...playersToCompare.map(p => p.comparisonCount));
+  const lowCountPlayers = playersToCompare.filter(p => p.comparisonCount === minCount);
+  const indexA = Math.floor(Math.random() * lowCountPlayers.length);
+  playerA.value = lowCountPlayers[indexA];
+  const remainingPlayers = playersToCompare.filter(p => p.id !== playerA.value.id);
+  if (remainingPlayers.length === 0) {
+    playerA.value = null; playerB.value = null; return;
+  }
+  const indexB = Math.floor(Math.random() * remainingPlayers.length);
+  playerB.value = remainingPlayers[indexB];
+
+  const playerAInFullList = players.value.find(p => p.id === playerA.value.id);
+  const playerBInFullList = players.value.find(p => p.id === playerB.value.id);
+  if (playerAInFullList) playerAInFullList.comparisonCount++;
+  if (playerBInFullList) playerBInFullList.comparisonCount++;
+  console.log(`New pair: ${playerA.value?.name} vs ${playerB.value?.name}`);
+};
+
+const vote = (winnerId) => {
+  if (!winnerId || !playerA.value || !playerB.value) return;
+  const winner = players.value.find(p => p.id === winnerId);
+  const loser = playerA.value.id === winnerId ? players.value.find(p => p.id === playerB.value.id) : players.value.find(p => p.id === playerA.value.id);
+  if (winner) winner.wins++;
+  if (loser) loser.losses++;
+  getRandomPair();
+};
+
+watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
+    if (newActivePlayers.length !== oldActivePlayers.length ||
+        !playerA.value || !playerB.value ||
+        !newActivePlayers.some(p => p.id === playerA.value.id) ||
+        !newActivePlayers.some(p => p.id === playerB.value.id)) {
+        getRandomPair();
+    }
+}, { deep: true });
+
+const getPickOrder = (numPicks, firstPicker, type) => {
+  const order = []; let currentPicker = firstPicker;
+  const secondPicker = firstPicker === 'A' ? 'B' : 'A';
+  if (type === 'simple') {
+    for (let i = 0; i < numPicks; i++) {
+      order.push(currentPicker); currentPicker = currentPicker === firstPicker ? secondPicker : firstPicker;
+    }
+  } else {
+    for (let i = 0; i < numPicks; i++) {
+      order.push((i % 4 === 0 || i % 4 === 3) ? firstPicker : secondPicker);
+    }
+  } return order;
+};
+
+const generateTeams = () => {
+  const rankedForwards = rankedPlayers.value.filter(p => p.position === 'F').sort((a, b) => calculateWinRatio(b) - calculateWinRatio(a)); // Sort by ratio
+  const rankedDefensemen = rankedPlayers.value.filter(p => p.position === 'D').sort((a, b) => calculateWinRatio(b) - calculateWinRatio(a)); // Sort by ratio
+  const rankedGoalies = rankedPlayers.value.filter(p => p.position === 'G').sort((a, b) => calculateWinRatio(b) - calculateWinRatio(a)); // Sort by ratio
+
+  const numForwards = rankedForwards.length; const numDefensemen = rankedDefensemen.length; const numGoalies = rankedGoalies.length;
+  if (numForwards + numDefensemen + numGoalies < 2) { alert("Need at least two active players."); return; }
+
+  const draftTeamA = []; const draftTeamB = []; showTeams.value = true;
+  let firstForwardPicker = 'A';
+  if (numForwards > 0) {
+      const forwardPickOrder = getPickOrder(numForwards, firstForwardPicker, draftType.value);
+      rankedForwards.forEach((p, i) => forwardPickOrder[i] === 'A' ? draftTeamA.push(p) : draftTeamB.push(p));
+  }
+  if (numDefensemen > 0) {
+      const firstDefensemanPicker = 'B';
+      const defensemanPickOrder = getPickOrder(numDefensemen, firstDefensemanPicker, draftType.value);
+      rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'A' ? draftTeamA.push(p) : draftTeamB.push(p));
+  }
+
+  const winsTeamA = draftTeamA.reduce((sum, p) => sum + p.wins, 0);
+  const winsTeamB = draftTeamB.reduce((sum, p) => sum + p.wins, 0);
+  if (numGoalies > 0) {
+    let goalieTeamToggle = winsTeamA <= winsTeamB;
+    for (const goalie of rankedGoalies) {
+      if (goalieTeamToggle) draftTeamA.push(goalie); else draftTeamB.push(goalie);
+      goalieTeamToggle = !goalieTeamToggle;
+    }
+  }
+
+  const positionOrder = { 'F': 1, 'D': 2, 'G': 3 };
+  draftTeamA.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+  draftTeamB.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+  teamA.value = draftTeamA; teamB.value = draftTeamB;
+  console.log("Final Sorted Teams Generated:", teamA.value, teamB.value);
+};
+
+const onDragStart = (event, player, team) => {
+  event.dataTransfer.setData('text/plain', player.id);
+  event.dataTransfer.effectAllowed = 'move';
+  draggedPlayer.value = player; sourceTeam.value = team;
+  event.target.classList.add('dragging');
+};
+const onDragEnd = (event) => {
+  event.target.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  draggedPlayer.value = null; sourceTeam.value = null;
+};
+const onDragOver = (event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; };
+const onDragEnter = (event, targetTeam) => {
+  if (event.target.closest('.team-list') && sourceTeam.value !== targetTeam) {
+    event.target.closest('.team-list').classList.add('drag-over');
+  }
+};
+const onDragLeave = (event, targetTeam) => {
+   if (!event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove('drag-over');
+   }
+};
+const onDrop = (event, targetTeam) => {
+  event.preventDefault();
+  const targetListElement = event.target.closest('.team-list');
+  if (!targetListElement) return;
+  targetListElement.classList.remove('drag-over');
+  const playerId = parseInt(event.dataTransfer.getData('text/plain'), 10);
+  const playerToMove = draggedPlayer.value;
+  if (!playerToMove || sourceTeam.value === targetTeam) return;
+
+  if (sourceTeam.value === 'A') teamA.value = teamA.value.filter(p => p.id !== playerToMove.id);
+  else teamB.value = teamB.value.filter(p => p.id !== playerToMove.id);
+  if (targetTeam === 'A') teamA.value.push(playerToMove);
+  else teamB.value.push(playerToMove);
+
+  // Re-sort the teams after manual drag/drop
+  const positionOrder = { 'F': 1, 'D': 2, 'G': 3 };
+  teamA.value.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+  teamB.value.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+
+  draggedPlayer.value = null; sourceTeam.value = null;
+};
+
+
+// --- Provide data and methods to child components ---
+provide('players', players);
+provide('addPlayer', addPlayer);
+provide('deletePlayer', deletePlayer);
+provide('vote', vote);
+provide('generateTeams', generateTeams);
+provide('onDragStart', onDragStart);
+provide('onDragEnd', onDragEnd);
+provide('onDragOver', onDragOver);
+provide('onDragEnter', onDragEnter);
+provide('onDragLeave', onDragLeave);
+provide('onDrop', onDrop);
+provide('calculateWinRatio', calculateWinRatio);
+
+// Provide computed properties
+provide('activeForwardCount', activeForwardCount);
+provide('activeDefenseCount', activeDefenseCount);
+provide('activeGoalieCount', activeGoalieCount);
+provide('activePlayers', activePlayers);
+provide('rankedPlayers', rankedPlayers);
+
+// Provide refs needed by children
+provide('newPlayerName', newPlayerName);
+provide('newPlayerPosition', newPlayerPosition);
+provide('playerA', playerA);
+provide('playerB', playerB);
+provide('teamA', teamA);
+provide('teamB', teamB);
+provide('showTeams', showTeams);
+provide('draftType', draftType);
+
+</script>
+
+<style>
+/* Global styles only */
+:root {
+  /* Light Theme Variables */
+  --bg-color: #ffffff;
+  --text-color: #2c3e50;
+  --border-color: #ccc;
+  --section-bg-color: #f9f9f9;
+  --section-border-color: #eee;
+  --button-bg-color: #007bff;
+  --button-text-color: #ffffff;
+  --button-hover-bg-color: #0056b3;
+  --delete-button-bg-color: #ff4d4d;
+  --delete-button-hover-bg-color: #cc0000;
+  --vote-button-bg-color: #4CAF50;
+  --vote-button-hover-bg-color: #45a049;
+  --inactive-text-color: #aaa;
+  --drag-over-bg-color: #e0ffe0;
+  --dragging-bg-color: #f0f0f0;
+  --header-border-color: #ccc;
+  --nav-link-color: #007bff;
+  --nav-link-hover-color: #0056b3;
+}
+
+.dark-theme {
+  /* Dark Theme Variables */
+  --bg-color: #1e1e1e;
+  --text-color: #e0e0e0;
+  --border-color: #555;
+  --section-bg-color: #2a2a2a;
+  --section-border-color: #444;
+  --button-bg-color: #007bff;
+  --button-text-color: #ffffff;
+  --button-hover-bg-color: #3395ff;
+  --delete-button-bg-color: #ff4d4d;
+  --delete-button-hover-bg-color: #ff7070;
+  --vote-button-bg-color: #4CAF50;
+  --vote-button-hover-bg-color: #6fbf73;
+  --inactive-text-color: #777;
+  --drag-over-bg-color: #3a4a3a;
+  --dragging-bg-color: #333;
+  --header-border-color: #555;
+  --nav-link-color: #3395ff;
+  --nav-link-hover-color: #66b0ff;
+}
+
+
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-height: 100vh;
+  /* padding-top: 60px; */ /* Removed as header handles spacing */
+  box-sizing: border-box;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.app-header {
+  background-color: var(--section-bg-color);
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative; /* For positioning theme toggle */
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.app-header nav a {
+  font-weight: bold;
+  color: var(--nav-link-color);
+  text-decoration: none;
+  margin: 0 10px;
+}
+
+.app-header nav a.router-link-exact-active {
+  color: var(--text-color); /* Highlight active link */
+  text-decoration: underline;
+}
+
+.app-header nav a:hover {
+  color: var(--nav-link-hover-color);
+}
+
+
+main {
+  padding: 20px; /* Add padding around the routed content */
+}
+
+
+/* Styles for components moved to views should be in those view files */
+/* Or keep common styles here if preferred */
+
+.theme-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%); /* Center vertically */
+    padding: 5px 10px;
+    background-color: var(--section-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    z-index: 10;
+    cursor: pointer;
+}
+
+/* Keep general button styling if needed globally */
+button {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 8px 15px;
+  border: none;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+
+</style>
         <div>
           <label for="playerName">Name:</label>
           <input type="text" id="playerName" v-model="newPlayerName" required>
@@ -171,499 +612,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-
-// Reactive state for the roster and new player form
-const players = ref([]); // Array to hold player objects { id, name, position, active }
-const newPlayerName = ref('');
-const newPlayerPosition = ref('F'); // Default position
-const playerA = ref(null); // Player for comparison A
-const playerB = ref(null); // Player for comparison B
-const teamA = ref([]); // Generated Team A
-const teamB = ref([]); // Generated Team B
-const showTeams = ref(false); // Flag to control team display
-const draftType = ref('serpentine'); // 'serpentine' or 'simple'
-const isLeaderboardVisible = ref(false); // Control leaderboard visibility
-const isDarkMode = ref(false); // Control dark mode
-
-// Function to toggle dark mode
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value;
-  // Optional: Persist theme preference in localStorage
-  // localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
-};
-
-// Optional: Load theme preference on mount
-// onMounted(() => {
-//   const savedTheme = localStorage.getItem('theme');
-//   if (savedTheme) {
-//     isDarkMode.value = savedTheme === 'dark';
-//   } else {
-//     // Optional: Check system preference
-//     isDarkMode.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-//   }
-// });
-
-
-// Computed property to get only active players
-const activePlayers = computed(() => players.value.filter(p => p.active));
-
-// Computed properties for active player counts by position
-const activeForwardCount = computed(() => {
-    return activePlayers.value.filter(p => p.position === 'F').length;
-});
-const activeDefenseCount = computed(() => {
-    return activePlayers.value.filter(p => p.position === 'D').length;
-});
-const activeGoalieCount = computed(() => {
-    return activePlayers.value.filter(p => p.position === 'G').length;
-});
-
-// Computed property for ranked leaderboard (active players sorted by win ratio)
-const rankedPlayers = computed(() => {
-  // Create a copy before sorting
-  return [...activePlayers.value].sort((a, b) => {
-      const ratioB = calculateWinRatio(b);
-      const ratioA = calculateWinRatio(a);
-      // Primary sort by ratio (descending)
-      if (ratioB !== ratioA) {
-          return ratioB - ratioA;
-      }
-      // Secondary sort by total games played (descending) for players with same ratio
-      const totalGamesB = b.wins + b.losses;
-      const totalGamesA = a.wins + a.losses;
-      if (totalGamesB !== totalGamesA) {
-          return totalGamesB - totalGamesA;
-      }
-      // Tertiary sort by wins (descending) as a final tie-breaker
-      return b.wins - a.wins;
-  });
-});
-
-// Function to add a new player
-const addPlayer = () => {
-  if (newPlayerName.value.trim() === '') {
-    alert('Player name cannot be empty.');
-    return;
-  }
-  const newPlayer = {
-    // Simple ID generation (consider a more robust method for persistence)
-    id: Date.now(),
-    name: newPlayerName.value.trim(),
-    position: newPlayerPosition.value,
-    active: true, // New players are active by default
-    wins: 0, // Initialize wins
-    losses: 0, // Initialize losses
-    comparisonCount: 0, // Initialize comparison count
-  };
-  players.value.push(newPlayer);
-
-  // Clear the form
-  newPlayerName.value = '';
-  newPlayerPosition.value = 'F';
-
-  savePlayers(); // Save after adding
-};
-
-// Function to load players from the backend API
-const loadPlayers = async () => {
-  try {
-    const response = await fetch('/api/players');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    // Ensure loaded data has the expected structure, migrating 'score' if necessary
-    players.value = data.map(player => {
-        const wins = player.wins !== undefined ? player.wins : (player.score !== undefined ? player.score : 0);
-        // Initialize losses to 0 if migrating from old format or if missing
-        const losses = player.losses !== undefined ? player.losses : 0;
-        return {
-            ...player,
-            active: player.active !== undefined ? player.active : true,
-            wins: wins,
-            losses: losses,
-            comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : (wins + losses), // Estimate comparison count if missing
-            // Remove old score field if it exists
-            score: undefined
-        };
-    }).filter(player => player.id !== undefined); // Ensure players have an ID
-    getRandomPair(); // Get initial pair after loading
-  } catch (error) {
-    console.error("Failed to load players:", error);
-    alert('Failed to load player data. Check the console for details.');
-    players.value = []; // Reset to empty array on error
-  }
-};
-
-// Function to save players to the backend API
-const savePlayers = async () => {
-  try {
-    const response = await fetch('/api/players', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(players.value),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    // console.log('Players saved successfully'); // Optional: for debugging
-  } catch (error) {
-    console.error("Failed to save players:", error);
-    alert('Failed to save player data. Check the console for details.');
-  }
-};
-
-// Load players when the component is mounted
-onMounted(loadPlayers);
-
-// Function to delete a player
-const deletePlayer = (playerId) => {
-  players.value = players.value.filter(player => player.id !== playerId);
-  savePlayers(); // Save after deleting
-};
-
-// Watch for changes in the players array (including nested properties like 'active')
-// and save whenever a change occurs. Deep watch is needed for nested properties.
-watch(players, savePlayers, { deep: true });
-
-// Function to get a random pair of distinct active players, separating goalies and skaters
-const getRandomPair = () => {
-  const activeGoalies = activePlayers.value.filter(p => p.position === 'G');
-  const activeSkaters = activePlayers.value.filter(p => p.position !== 'G'); // F or D
-
-  const canCompareGoalies = activeGoalies.length >= 2;
-  const canCompareSkaters = activeSkaters.length >= 2;
-
-  let playersToCompare = [];
-  let comparisonType = '';
-
-  // Decide which group to compare
-  if (canCompareGoalies && canCompareSkaters) {
-    // Both possible, choose randomly, but make goalies less frequent (e.g., 10% chance)
-    comparisonType = Math.random() < 0.1 ? 'Goalies' : 'Skaters';
-  } else if (canCompareGoalies) {
-    comparisonType = 'Goalies';
-  } else if (canCompareSkaters) {
-    comparisonType = 'Skaters';
-  } else {
-    // Neither comparison is possible
-    playerA.value = null;
-    playerB.value = null;
-    console.log("Need at least two active goalies or two active skaters to vote.");
-    return;
-  }
-
-  // Select players from the chosen group
-  if (comparisonType === 'Goalies') {
-    playersToCompare = activeGoalies;
-    console.log("Comparing Goalies");
-  } else {
-    playersToCompare = activeSkaters;
-    console.log("Comparing Skaters");
-  }
-
-  // --- Select players, prioritizing lower comparison count ---
-
-  // Find the minimum comparison count among eligible players
-  const minCount = Math.min(...playersToCompare.map(p => p.comparisonCount));
-  // Get all players at the minimum count
-  const lowCountPlayers = playersToCompare.filter(p => p.comparisonCount === minCount);
-
-  // Select Player A randomly from the low-count group
-  const indexA = Math.floor(Math.random() * lowCountPlayers.length);
-  playerA.value = lowCountPlayers[indexA];
-
-  // Get the remaining players (excluding playerA)
-  const remainingPlayers = playersToCompare.filter(p => p.id !== playerA.value.id);
-
-  if (remainingPlayers.length === 0) {
-      // This should only happen if there were exactly 2 players total and they were picked
-      // Handle edge case - maybe show message or log error
-      console.error("Cannot select second player - only one remaining.");
-       playerA.value = null; // Reset pair
-       playerB.value = null;
-       return;
-  }
-
-  // Select Player B randomly from the remaining players
-  const indexB = Math.floor(Math.random() * remainingPlayers.length);
-  playerB.value = remainingPlayers[indexB];
-
-  // --- Increment comparison count for the selected pair ---
-  // Note: We increment when the pair is *shown*, not just when voted on.
-  // The watch(players, savePlayers) will handle saving this change.
-  const playerAInFullList = players.value.find(p => p.id === playerA.value.id);
-  const playerBInFullList = players.value.find(p => p.id === playerB.value.id);
-  if (playerAInFullList) playerAInFullList.comparisonCount++;
-  if (playerBInFullList) playerBInFullList.comparisonCount++;
-
-
-  console.log(`New pair: ${playerA.value?.name} (Count: ${playerAInFullList?.comparisonCount}) vs ${playerB.value?.name} (Count: ${playerBInFullList?.comparisonCount})`); // Debug log
-};
-
-// Function to handle voting
-const vote = (winnerId) => {
-  if (!winnerId || !playerA.value || !playerB.value) return;
-
-  const winner = players.value.find(p => p.id === winnerId);
-  // Determine the loser
-  const loser = playerA.value.id === winnerId ? players.value.find(p => p.id === playerB.value.id) : players.value.find(p => p.id === playerA.value.id);
-
-  if (winner) {
-    winner.wins++;
-    console.log(`Voted for ${winner.name}, new wins: ${winner.wins}`); // Debug log
-  } else {
-    console.error("Winner not found for ID:", winnerId);
-  }
-
-  if (loser) {
-      loser.losses++;
-      console.log(`Loser: ${loser.name}, new losses: ${loser.losses}`); // Debug log
-  } else {
-      // This case should ideally not happen if winner was found and playerA/B were set
-      console.error("Loser could not be determined.");
-  }
-
-  // savePlayers() will be triggered by the watch for changes in wins/losses
-
-  // Get the next pair immediately after voting
-  getRandomPair();
-};
-
-// Watch activePlayers list to get a new pair if the list changes significantly
-// (e.g., players added/removed or made inactive)
-watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
-    // Only get a new pair if the number of active players changes
-    // or if the current pair becomes invalid
-    if (newActivePlayers.length !== oldActivePlayers.length ||
-        !playerA.value || !playerB.value ||
-        !newActivePlayers.some(p => p.id === playerA.value.id) ||
-        !newActivePlayers.some(p => p.id === playerB.value.id)) {
-        getRandomPair();
-    }
-}, { deep: true }); // Deep watch might be overkill here but ensures reactivity
-
-
-// Function to calculate win ratio (handles division by zero)
-const calculateWinRatio = (player) => {
-  const totalGames = player.wins + player.losses;
-  if (totalGames === 0) {
-    return 0; // Or 0.5 if you prefer to rank players with 0 games differently
-  }
-  return player.wins / totalGames;
-};
-
-// Helper function to generate the sequence of picking teams
-const getPickOrder = (numPicks, firstPicker, type) => {
-  const order = [];
-  let currentPicker = firstPicker;
-  const secondPicker = firstPicker === 'A' ? 'B' : 'A';
-
-  if (type === 'simple') {
-    for (let i = 0; i < numPicks; i++) {
-      order.push(currentPicker);
-      currentPicker = currentPicker === firstPicker ? secondPicker : firstPicker;
-    }
-  } else { // serpentine
-    for (let i = 0; i < numPicks; i++) {
-       // Serpentine logic: A, B, B, A, A, B, B, A ...
-       // Determine picker based on index i (0-based)
-      if (i % 4 === 0 || i % 4 === 3) { // Picks 1, 4, 5, 8, 9, ...
-        order.push(firstPicker);
-      } else { // Picks 2, 3, 6, 7, 10, 11, ...
-        order.push(secondPicker);
-      }
-    }
-  }
-  return order;
-};
-
-// Function to generate teams using selected draft logic, drafting goalies last
-const generateTeams = () => {
-  // Separate ranked players into Forwards, Defensemen, and Goalies
-  const rankedForwards = rankedPlayers.value.filter(p => p.position === 'F').sort((a, b) => b.score - a.score);
-  const rankedDefensemen = rankedPlayers.value.filter(p => p.position === 'D').sort((a, b) => b.score - a.score);
-  const rankedGoalies = rankedPlayers.value.filter(p => p.position === 'G').sort((a, b) => b.score - a.score);
-
-  const numForwards = rankedForwards.length;
-  const numDefensemen = rankedDefensemen.length;
-  const numGoalies = rankedGoalies.length;
-  const numSkaters = numForwards + numDefensemen; // Keep total skater count for check
-
-  if (numSkaters + numGoalies < 2) {
-    alert("Need at least two active players (F, D, or G) to generate teams.");
-    return;
-  }
-
-  const draftTeamA = [];
-  const draftTeamB = [];
-  showTeams.value = true; // Show the team display section
-
-  // --- Phase 1: Draft Forwards ---
-  let firstForwardPicker = 'A'; // Team A gets first Forward pick
-  if (numForwards > 0) {
-      const forwardPickOrder = getPickOrder(numForwards, firstForwardPicker, draftType.value);
-      console.log("Forward Pick Order:", forwardPickOrder); // Debug log
-      rankedForwards.forEach((player, index) => {
-          const pickingTeam = forwardPickOrder[index];
-          if (pickingTeam === 'A') {
-              draftTeamA.push(player);
-          } else {
-              draftTeamB.push(player);
-          }
-      });
-  } else {
-      console.log("No forwards to draft.");
-  }
-
-  // --- Phase 2: Draft Defensemen ---
-  if (numDefensemen > 0) {
-      // Team B always gets the first defenseman pick in this scheme (since A got first F pick)
-      const firstDefensemanPicker = 'B';
-      const defensemanPickOrder = getPickOrder(numDefensemen, firstDefensemanPicker, draftType.value);
-      console.log("Defenseman Pick Order:", defensemanPickOrder); // Debug log
-      rankedDefensemen.forEach((player, index) => {
-          const pickingTeam = defensemanPickOrder[index];
-          if (pickingTeam === 'A') {
-              draftTeamA.push(player);
-          } else {
-              draftTeamB.push(player);
-          }
-      });
-  } else {
-      console.log("No defensemen to draft.");
-  }
-
-  // --- Calculate Skater Wins Total (after both F and D drafts) ---
-  const winsTeamA = draftTeamA.reduce((sum, player) => sum + player.wins, 0);
-  const winsTeamB = draftTeamB.reduce((sum, player) => sum + player.wins, 0);
-  console.log(`Skater Wins Total - Team A: ${winsTeamA}, Team B: ${winsTeamB}`); // Debug log
-
-  // --- Phase 3: Draft Goalies ---
-  if (numGoalies > 0) {
-    // Assign first goalie to the team with lower total skater WINS (or A if equal)
-    let goalieTeamToggle = winsTeamA <= winsTeamB;
-
-    for (const goalie of rankedGoalies) {
-      if (goalieTeamToggle) {
-        draftTeamA.push(goalie); // Add goalie to the end
-        console.log(`Assigning goalie ${goalie.name} to Team A`); // Debug log
-      } else {
-        draftTeamB.push(goalie); // Add goalie to the end
-        console.log(`Assigning goalie ${goalie.name} to Team B`); // Debug log
-      }
-      goalieTeamToggle = !goalieTeamToggle; // Alternate for next goalie
-    }
-  }
-
-  // --- Sort teams by position (F > D > G) before final assignment ---
-  const positionOrder = { 'F': 1, 'D': 2, 'G': 3 };
-  draftTeamA.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
-  draftTeamB.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
-
-  // Assign the final sorted drafted teams to the reactive refs
-  teamA.value = draftTeamA;
-  teamB.value = draftTeamB;
-
-  console.log("Final Sorted Teams Generated:", teamA.value, teamB.value); // Debug log
-};
-
-
-// --- Drag and Drop Handlers ---
-
-const draggedPlayer = ref(null); // Store the player being dragged
-const sourceTeam = ref(null); // Store the team the player is dragged from ('A' or 'B')
-
-const onDragStart = (event, player, team) => {
-  // Set data to be transferred (player ID)
-  event.dataTransfer.setData('text/plain', player.id);
-  event.dataTransfer.effectAllowed = 'move';
-  draggedPlayer.value = player; // Keep track of the object itself
-  sourceTeam.value = team;
-  // Optional: Add a class to the dragged element for styling
-  event.target.classList.add('dragging');
-  console.log(`Drag Start: ${player.name} from Team ${team}`);
-};
-
-const onDragEnd = (event) => {
-  // Clean up styling when drag ends (successfully or cancelled)
-  event.target.classList.remove('dragging');
-  // Clear drag-over styles from potential targets
-  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-  draggedPlayer.value = null;
-  sourceTeam.value = null;
-   console.log('Drag End');
-};
-
-
-const onDragOver = (event) => {
-  // Prevent default to allow drop
-  event.preventDefault();
-  event.dataTransfer.dropEffect = 'move';
-};
-
-const onDragEnter = (event, targetTeam) => {
-  // Add visual feedback when entering a valid drop zone
-  if (event.target.closest('.team-list') && sourceTeam.value !== targetTeam) {
-      event.target.closest('.team-list').classList.add('drag-over');
-      console.log(`Drag Enter: Team ${targetTeam}`);
-  }
-};
-
-const onDragLeave = (event, targetTeam) => {
-  // Remove visual feedback when leaving the drop zone boundary
-  // Check if the relatedTarget (where the mouse is going) is outside the current element
-   if (!event.currentTarget.contains(event.relatedTarget)) {
-        event.currentTarget.classList.remove('drag-over');
-        console.log(`Drag Leave: Team ${targetTeam}`);
-   }
-};
-
-const onDrop = (event, targetTeam) => {
-  event.preventDefault();
-  const targetListElement = event.target.closest('.team-list');
-  if (!targetListElement) return; // Should not happen if dragover worked
-
-  targetListElement.classList.remove('drag-over'); // Remove drop zone styling
-
-  const playerId = parseInt(event.dataTransfer.getData('text/plain'), 10); // Ensure ID is number if needed
-  const playerToMove = draggedPlayer.value; // Use the stored player object
-
-  console.log(`Drop: Player ID ${playerId} onto Team ${targetTeam}, from Team ${sourceTeam.value}`);
-
-
-  // Ensure we have the player and it's not dropped onto the same team
-  if (!playerToMove || sourceTeam.value === targetTeam) {
-    console.log("Drop cancelled: Same team or no player data.");
-    return;
-  }
-
-  // Remove from source team
-  if (sourceTeam.value === 'A') {
-    teamA.value = teamA.value.filter(p => p.id !== playerToMove.id);
-  } else {
-    teamB.value = teamB.value.filter(p => p.id !== playerToMove.id);
-  }
-
-  // Add to target team
-  if (targetTeam === 'A') {
-    teamA.value.push(playerToMove);
-  } else {
-    teamB.value.push(playerToMove);
-  }
-
-  // Reset drag state
-  draggedPlayer.value = null;
-  sourceTeam.value = null;
-
-  // Note: Changes to teamA/teamB are reactive, but don't trigger savePlayers
-  // If persistence of manual swaps is needed, call savePlayers() or similar here.
-};
-
-</script>
 
 <style>
 /* Global styles can go here */

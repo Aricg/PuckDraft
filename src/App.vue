@@ -53,14 +53,16 @@
         <div class="player-card">
           <h3>{{ playerA.name }}</h3>
           <p>Position: {{ playerA.position }}</p>
-          <p>Score: {{ playerA.score }}</p>
+          <p>Record: {{ playerA.wins }} W / {{ playerA.losses }} L</p>
+          <p>Ratio: {{ (calculateWinRatio(playerA) * 100).toFixed(1) }}%</p>
           <button @click="vote(playerA.id)">Vote</button>
         </div>
         <span class="vs">vs</span>
         <div class="player-card">
           <h3>{{ playerB.name }}</h3>
           <p>Position: {{ playerB.position }}</p>
-          <p>Score: {{ playerB.score }}</p>
+          <p>Record: {{ playerB.wins }} W / {{ playerB.losses }} L</p>
+          <p>Ratio: {{ (calculateWinRatio(playerB) * 100).toFixed(1) }}%</p>
           <button @click="vote(playerB.id)">Vote</button>
         </div>
       </div>
@@ -83,7 +85,11 @@
         </h2>
         <ul v-if="isLeaderboardVisible && rankedPlayers.length > 0">
             <li v-for="(player, index) in rankedPlayers" :key="player.id">
-                <span>{{ index + 1 }}. {{ player.name }} ({{ player.position }}) - Score: {{ player.score }}</span>
+                <span>
+                    {{ index + 1 }}. {{ player.name }} ({{ player.position }}) -
+                    {{ player.wins }}W / {{ player.losses }}L
+                    ({{ (calculateWinRatio(player) * 100).toFixed(1) }}%)
+                </span>
             </li>
         </ul>
         <p v-if="isLeaderboardVisible && rankedPlayers.length === 0">No active players to rank.</p>
@@ -206,10 +212,25 @@ const activeGoalieCount = computed(() => {
     return activePlayers.value.filter(p => p.position === 'G').length;
 });
 
-// Computed property for ranked leaderboard (active players sorted by score)
+// Computed property for ranked leaderboard (active players sorted by win ratio)
 const rankedPlayers = computed(() => {
-  // Create a copy before sorting to avoid mutating the original source
-  return [...activePlayers.value].sort((a, b) => b.score - a.score);
+  // Create a copy before sorting
+  return [...activePlayers.value].sort((a, b) => {
+      const ratioB = calculateWinRatio(b);
+      const ratioA = calculateWinRatio(a);
+      // Primary sort by ratio (descending)
+      if (ratioB !== ratioA) {
+          return ratioB - ratioA;
+      }
+      // Secondary sort by total games played (descending) for players with same ratio
+      const totalGamesB = b.wins + b.losses;
+      const totalGamesA = a.wins + a.losses;
+      if (totalGamesB !== totalGamesA) {
+          return totalGamesB - totalGamesA;
+      }
+      // Tertiary sort by wins (descending) as a final tie-breaker
+      return b.wins - a.wins;
+  });
 });
 
 // Function to add a new player
@@ -224,7 +245,8 @@ const addPlayer = () => {
     name: newPlayerName.value.trim(),
     position: newPlayerPosition.value,
     active: true, // New players are active by default
-    score: 0, // Initialize score
+    wins: 0, // Initialize wins
+    losses: 0, // Initialize losses
     comparisonCount: 0, // Initialize comparison count
   };
   players.value.push(newPlayer);
@@ -244,13 +266,21 @@ const loadPlayers = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    // Ensure loaded data has the expected structure, including 'active' and 'score'
-    players.value = data.map(player => ({
-        ...player,
-        active: player.active !== undefined ? player.active : true, // Default to active if missing
-        score: player.score !== undefined ? player.score : 0, // Default score to 0 if missing
-        comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : 0 // Default count to 0
-    }));
+    // Ensure loaded data has the expected structure, migrating 'score' if necessary
+    players.value = data.map(player => {
+        const wins = player.wins !== undefined ? player.wins : (player.score !== undefined ? player.score : 0);
+        // Initialize losses to 0 if migrating from old format or if missing
+        const losses = player.losses !== undefined ? player.losses : 0;
+        return {
+            ...player,
+            active: player.active !== undefined ? player.active : true,
+            wins: wins,
+            losses: losses,
+            comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : (wins + losses), // Estimate comparison count if missing
+            // Remove old score field if it exists
+            score: undefined
+        };
+    }).filter(player => player.id !== undefined); // Ensure players have an ID
     getRandomPair(); // Get initial pair after loading
   } catch (error) {
     console.error("Failed to load players:", error);
@@ -369,16 +399,28 @@ const getRandomPair = () => {
 
 // Function to handle voting
 const vote = (winnerId) => {
-  if (!winnerId) return;
+  if (!winnerId || !playerA.value || !playerB.value) return;
 
   const winner = players.value.find(p => p.id === winnerId);
+  // Determine the loser
+  const loser = playerA.value.id === winnerId ? players.value.find(p => p.id === playerB.value.id) : players.value.find(p => p.id === playerA.value.id);
+
   if (winner) {
-    winner.score++;
-    console.log(`Voted for ${winner.name}, new score: ${winner.score}`); // Debug log
-    // savePlayers() will be triggered by the watch
+    winner.wins++;
+    console.log(`Voted for ${winner.name}, new wins: ${winner.wins}`); // Debug log
   } else {
-      console.error("Winner not found for ID:", winnerId);
+    console.error("Winner not found for ID:", winnerId);
   }
+
+  if (loser) {
+      loser.losses++;
+      console.log(`Loser: ${loser.name}, new losses: ${loser.losses}`); // Debug log
+  } else {
+      // This case should ideally not happen if winner was found and playerA/B were set
+      console.error("Loser could not be determined.");
+  }
+
+  // savePlayers() will be triggered by the watch for changes in wins/losses
 
   // Get the next pair immediately after voting
   getRandomPair();
@@ -397,6 +439,15 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
     }
 }, { deep: true }); // Deep watch might be overkill here but ensures reactivity
 
+
+// Function to calculate win ratio (handles division by zero)
+const calculateWinRatio = (player) => {
+  const totalGames = player.wins + player.losses;
+  if (totalGames === 0) {
+    return 0; // Or 0.5 if you prefer to rank players with 0 games differently
+  }
+  return player.wins / totalGames;
+};
 
 // Helper function to generate the sequence of picking teams
 const getPickOrder = (numPicks, firstPicker, type) => {
@@ -479,12 +530,12 @@ const generateTeams = () => {
       console.log("No defensemen to draft.");
   }
 
-  // --- Calculate Skater Scores (after both F and D drafts) ---
-  const scoreTeamA = draftTeamA.reduce((sum, player) => sum + player.score, 0);
-  const scoreTeamB = draftTeamB.reduce((sum, player) => sum + player.score, 0);
-  console.log(`Skater Scores - Team A: ${scoreTeamA}, Team B: ${scoreTeamB}`); // Debug log
+  // --- Calculate Skater Wins Total (after both F and D drafts) ---
+  const winsTeamA = draftTeamA.reduce((sum, player) => sum + player.wins, 0);
+  const winsTeamB = draftTeamB.reduce((sum, player) => sum + player.wins, 0);
+  console.log(`Skater Wins Total - Team A: ${winsTeamA}, Team B: ${winsTeamB}`); // Debug log
 
-  // --- Draft Goalies ---
+  // --- Phase 3: Draft Goalies ---
   if (numGoalies > 0) {
     let goalieTeamToggle = scoreTeamA <= scoreTeamB; // Assign first goalie to lower score team (or A if equal)
 

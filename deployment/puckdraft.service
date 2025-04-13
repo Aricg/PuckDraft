@@ -1,0 +1,28 @@
+[Unit]
+Description=PuckDraft Vue Application Development Server
+# Start this service after the network is available
+After=network.target
+
+[Service]
+# --- IMPORTANT: Replace 'pi' with the actual username on your Raspberry Pi ---
+# This user needs node/npm in their PATH and permissions to the project directory
+User=pi
+# --- IMPORTANT: Replace '/home/pi/PuckDraft' with the full path to your project on your Raspberry Pi ---
+WorkingDirectory=/home/pi/PuckDraft
+
+# Command to execute. Assumes npm is in the User's PATH.
+# If not, provide the full path, e.g., /usr/local/bin/npm run serve ...
+# Note: Using the full path to npm is often more reliable in systemd services.
+# You can find the path by running 'which npm' on your Pi as the target user.
+ExecStart=/usr/bin/npm run serve -- --host 0.0.0.0
+
+# Restart the service if it fails
+Restart=on-failure
+RestartSec=5s
+
+# Optional: Set environment variables if needed by your app
+# Environment="NODE_ENV=development"
+
+[Install]
+# Enable the service for the default multi-user target (standard system startup)
+WantedBy=multi-user.target

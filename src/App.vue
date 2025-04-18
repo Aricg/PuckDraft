@@ -49,6 +49,21 @@ const shuffleArray = (array) => {
   return array;
 };
 
+// Helper function to sort team by position, then shuffle within position
+const sortAndShuffleTeam = (team) => {
+  const forwards = team.filter(p => p.position === 'F');
+  const defense = team.filter(p => p.position === 'D');
+  const goalies = team.filter(p => p.position === 'G');
+
+  // Shuffle each group
+  shuffleArray(forwards);
+  shuffleArray(defense);
+  shuffleArray(goalies);
+
+  // Combine in F, D, G order
+  return [...forwards, ...defense, ...goalies];
+};
+
 // --- Theme Toggle ---
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value;

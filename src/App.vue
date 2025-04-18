@@ -66,6 +66,20 @@ const sortAndShuffleTeam = (team) => {
   return [...forwards, ...defense, ...goalies];
 };
 
+// Helper function to calculate and update average skater win ratios for teams
+const updateAvgSkaterRatios = () => {
+  const skatersTeamA = teamA.value.filter(p => p.position !== 'G');
+  const skatersTeamB = teamB.value.filter(p => p.position !== 'G');
+
+  const ratioSumA = skatersTeamA.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const ratioSumB = skatersTeamB.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+
+  avgSkaterRatioA.value = skatersTeamA.length > 0 ? ratioSumA / skatersTeamA.length : 0;
+  avgSkaterRatioB.value = skatersTeamB.length > 0 ? ratioSumB / skatersTeamB.length : 0;
+
+  console.log(`Updated Avg Skater Ratios - Team A: ${avgSkaterRatioA.value.toFixed(3)}, Team B: ${avgSkaterRatioB.value.toFixed(3)}`);
+};
+
 // --- Theme Toggle ---
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value;
@@ -255,25 +269,20 @@ const generateTeams = () => {
       rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'A' ? draftTeamA.push(p) : draftTeamB.push(p));
   }
 
-  // Calculate average win ratio for skaters on each team
-  const skatersTeamA = draftTeamA.filter(p => p.position !== 'G');
-  const skatersTeamB = draftTeamB.filter(p => p.position !== 'G');
+  // Calculate initial average skater win ratio to determine goalie pick order
+  // Note: This uses the draftTeam arrays *before* goalies are added
+  const initialSkatersA = draftTeamA.filter(p => p.position !== 'G');
+  const initialSkatersB = draftTeamB.filter(p => p.position !== 'G');
+  const initialRatioSumA = initialSkatersA.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const initialRatioSumB = initialSkatersB.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const initialAvgRatioA = initialSkatersA.length > 0 ? initialRatioSumA / initialSkatersA.length : 0;
+  const initialAvgRatioB = initialSkatersB.length > 0 ? initialRatioSumB / initialSkatersB.length : 0;
 
-  const ratioSumA = skatersTeamA.reduce((sum, p) => sum + calculateWinRatio(p), 0);
-  const ratioSumB = skatersTeamB.reduce((sum, p) => sum + calculateWinRatio(p), 0);
-
-  const avgRatioA = skatersTeamA.length > 0 ? ratioSumA / skatersTeamA.length : 0;
-  const avgRatioB = skatersTeamB.length > 0 ? ratioSumB / skatersTeamB.length : 0;
-
-  // Store the calculated ratios
-  avgSkaterRatioA.value = avgRatioA;
-  avgSkaterRatioB.value = avgRatioB;
-
-  console.log(`Avg Skater Ratio - Team A: ${avgRatioA.toFixed(3)}, Team B: ${avgRatioB.toFixed(3)}`);
+  console.log(`Initial Avg Skater Ratio (for goalie pick) - Team A: ${initialAvgRatioA.toFixed(3)}, Team B: ${initialAvgRatioB.toFixed(3)}`);
 
   if (numGoalies > 0) {
     // Team with lower average skater win ratio gets the first goalie pick
-    let goalieTeamToggle = avgRatioA <= avgRatioB;
+    let goalieTeamToggle = initialAvgRatioA <= initialAvgRatioB;
     console.log(`Assigning first goalie to Team ${goalieTeamToggle ? 'A' : 'B'}`);
     for (const goalie of rankedGoalies) {
       if (goalieTeamToggle) draftTeamA.push(goalie); else draftTeamB.push(goalie);
@@ -284,6 +293,9 @@ const generateTeams = () => {
   // Sort by position, then shuffle within each position group
   teamA.value = sortAndShuffleTeam(draftTeamA);
   teamB.value = sortAndShuffleTeam(draftTeamB);
+
+  // Update the displayed average skater ratios based on the final teams
+  updateAvgSkaterRatios();
 
   console.log("Final Sorted and Shuffled Teams Generated:", teamA.value, teamB.value);
 };
@@ -327,6 +339,9 @@ const onDrop = (event, targetTeam) => {
   // Re-sort and shuffle the teams after manual drag/drop
   teamA.value = sortAndShuffleTeam(teamA.value);
   teamB.value = sortAndShuffleTeam(teamB.value);
+
+  // Update the average skater ratios after the drop
+  updateAvgSkaterRatios();
 
   draggedPlayer.value = null; sourceTeam.value = null;
 };

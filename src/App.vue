@@ -39,6 +39,8 @@ const showTeams = ref(false);
 const draftType = ref('serpentine');
 const draggedPlayer = ref(null);
 const sourceTeam = ref(null);
+const avgSkaterRatioA = ref(0); // Ref to store Team A's avg skater ratio
+const avgSkaterRatioB = ref(0); // Ref to store Team B's avg skater ratio
 
 // Helper function to shuffle an array (Fisher-Yates algorithm)
 const shuffleArray = (array) => {
@@ -344,6 +346,8 @@ provide('teamA', teamA);
 provide('teamB', teamB);
 provide('showTeams', showTeams);
 provide('draftType', draftType);
+provide('avgSkaterRatioA', avgSkaterRatioA); // Provide Team A ratio
+provide('avgSkaterRatioB', avgSkaterRatioB); // Provide Team B ratio
 
 </script>
 

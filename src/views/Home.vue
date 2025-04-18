@@ -81,6 +81,7 @@
               @drop="onDrop($event, 'A')"
             >
                 <h3>Team A</h3>
+                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioA * 100).toFixed(1) }}%</p>
                 <ul>
                     <li
                       v-for="player in teamA"
@@ -101,6 +102,7 @@
               @drop="onDrop($event, 'B')"
             >
                 <h3>Team B</h3>
+                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioB * 100).toFixed(1) }}%</p>
                 <ul>
                      <li
                        v-for="player in teamB"
@@ -155,6 +157,8 @@ const teamA = inject('teamA');
 const teamB = inject('teamB');
 const showTeams = inject('showTeams');
 const draftType = inject('draftType');
+const avgSkaterRatioA = inject('avgSkaterRatioA'); // Inject Team A ratio
+const avgSkaterRatioB = inject('avgSkaterRatioB'); // Inject Team B ratio
 
 </script>
 
@@ -324,6 +328,14 @@ button {
   text-align: center;
   border-bottom: 1px solid var(--header-border-color);
   padding-bottom: 5px;
+}
+
+.team-strength {
+  font-size: 0.85em;
+  color: var(--inactive-text-color); /* Use a less prominent color */
+  text-align: center;
+  margin-top: -5px; /* Adjust spacing */
+  margin-bottom: 10px;
 }
 
 /* Drag and Drop Styling */

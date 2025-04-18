@@ -50,33 +50,6 @@
       <p v-else>No players added yet.</p>
     </section>
 
-    <!-- Hot or Not Voting -->
-    <section class="hot-or-not" v-if="playerA && playerB">
-      <h2>Top Pick?</h2>
-      <div class="comparison">
-        <div class="player-card">
-          <h3>{{ playerA.name }}</h3>
-          <p>Position: {{ playerA.position }}</p>
-          <!-- Record and Ratio hidden -->
-          <button @click="vote(playerA.id)">Vote</button>
-        </div>
-        <span class="vs">vs</span>
-        <div class="player-card">
-          <h3>{{ playerB.name }}</h3>
-          <p>Position: {{ playerB.position }}</p>
-          <!-- Record and Ratio hidden -->
-          <button @click="vote(playerB.id)">Vote</button>
-        </div>
-      </div>
-    </section>
-    <section v-else-if="activePlayers.length >= 2">
-        <p>Loading next pair...</p>
-    </section>
-     <section v-else>
-        <!-- Updated message based on new logic -->
-        <p>Add at least two 'In' Goalies or two 'In' Skaters (F/D) to start voting.</p>
-    </section>
-
      <!-- Team Generation Trigger -->
      <section class="team-generation">
         <h2>Generate Teams</h2>
@@ -149,7 +122,7 @@ import { inject, ref } from 'vue';
 const players = inject('players');
 const addPlayer = inject('addPlayer');
 const deletePlayer = inject('deletePlayer');
-const vote = inject('vote');
+// vote is removed
 const generateTeams = inject('generateTeams');
 const onDragStart = inject('onDragStart');
 const onDragEnd = inject('onDragEnd');
@@ -167,8 +140,7 @@ const activePlayers = inject('activePlayers');
 // Inject refs needed for this view
 const newPlayerName = inject('newPlayerName');
 const newPlayerPosition = inject('newPlayerPosition');
-const playerA = inject('playerA');
-const playerB = inject('playerB');
+// playerA and playerB are removed
 const teamA = inject('teamA');
 const teamB = inject('teamB');
 const showTeams = inject('showTeams');
@@ -235,60 +207,9 @@ const draftType = inject('draftType');
   background-color: var(--delete-button-hover-bg-color);
 }
 
-/* Hot or Not Styling */
-.hot-or-not {
-  margin-top: 30px;
-  padding: 15px;
-  /* border: 1px solid #ccc; */ /* Duplicated from above */
-  border-radius: 5px;
-}
-
-.comparison {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  margin-top: 15px;
-}
-
-.player-card {
-  border: 1px solid var(--section-border-color);
-  background-color: var(--bg-color); /* Match app background or keep section */
-  padding: 15px;
-  border-radius: 5px;
-  width: 40%;
-  text-align: center;
-}
-
-.player-card h3 {
-  margin-top: 0;
-}
-
-.player-card button {
-  background-color: var(--vote-button-bg-color);
-  color: var(--button-text-color);
-  border: none;
-  padding: 10px 15px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.player-card button:hover {
-  background-color: var(--vote-button-hover-bg-color);
-}
-
-.vs {
-  font-weight: bold;
-  font-size: 1.5em;
-}
-
 /* Team Generation, and Teams Display Styling */
 .team-generation, .teams-display {
-  margin-top: 30px;
+  margin-top: 30px; /* Keep margin if desired after removing hot-or-not */
   padding: 15px;
   /* border: 1px solid #ccc; */ /* Duplicated */
   border-radius: 5px;

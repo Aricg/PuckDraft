@@ -74,7 +74,7 @@
     </section>
      <section v-else>
         <!-- Updated message based on new logic -->
-        <p>Add at least two active Goalies or two active Skaters (F/D) to start voting.</p>
+        <p>Add at least two 'In' Goalies or two 'In' Skaters (F/D) to start voting.</p>
     </section>
 
      <!-- Team Generation Trigger -->

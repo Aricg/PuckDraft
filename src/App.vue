@@ -40,6 +40,15 @@ const draftType = ref('serpentine');
 const draggedPlayer = ref(null);
 const sourceTeam = ref(null);
 
+// Helper function to shuffle an array (Fisher-Yates algorithm)
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+  }
+  return array;
+};
+
 // --- Theme Toggle ---
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value;
@@ -239,11 +248,11 @@ const generateTeams = () => {
     }
   }
 
-  const positionOrder = { 'F': 1, 'D': 2, 'G': 3 };
-  draftTeamA.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
-  draftTeamB.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
-  teamA.value = draftTeamA; teamB.value = draftTeamB;
-  console.log("Final Sorted Teams Generated:", teamA.value, teamB.value);
+  // Sort by position, then shuffle within each position group
+  teamA.value = sortAndShuffleTeam(draftTeamA);
+  teamB.value = sortAndShuffleTeam(draftTeamB);
+
+  console.log("Final Sorted and Shuffled Teams Generated:", teamA.value, teamB.value);
 };
 
 const onDragStart = (event, player, team) => {
@@ -282,10 +291,9 @@ const onDrop = (event, targetTeam) => {
   if (targetTeam === 'A') teamA.value.push(playerToMove);
   else teamB.value.push(playerToMove);
 
-  // Re-sort the teams after manual drag/drop
-  const positionOrder = { 'F': 1, 'D': 2, 'G': 3 };
-  teamA.value.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
-  teamB.value.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]);
+  // Re-sort and shuffle the teams after manual drag/drop
+  teamA.value = sortAndShuffleTeam(teamA.value);
+  teamB.value = sortAndShuffleTeam(teamB.value);
 
   draggedPlayer.value = null; sourceTeam.value = null;
 };

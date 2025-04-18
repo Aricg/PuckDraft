@@ -3,9 +3,11 @@
     <!-- Add Player Form -->
     <section class="player-form">
       <h2>Add New Player</h2>
-      <form @submit.prevent="addPlayer">
-        <div>
-          <label for="playerName">Name:</label>
+      <div class="player-form-content">
+        <img src="/FNHL.jpg" alt="FNHL Logo" class="form-logo">
+        <form @submit.prevent="addPlayer">
+          <div>
+            <label for="playerName">Name:</label>
           <input type="text" id="playerName" v-model="newPlayerName" required>
         </div>
         <div>
@@ -15,9 +17,11 @@
             <option value="D">Defense (D)</option>
             <option value="G">Goalie (G)</option>
           </select>
-        </div>
-        <button type="submit">Add Player</button>
-      </form>
+          </div>
+          <button type="submit">Add Player</button>
+        </form>
+        <img src="/FNHL.jpg" alt="FNHL Logo" class="form-logo">
+      </div>
     </section>
 
     <!-- Roster View -->
@@ -162,8 +166,32 @@ const draftType = inject('draftType');
   transition: background-color 0.3s, border-color 0.3s;
 }
 
+.player-form-content {
+  display: flex;
+  align-items: center; /* Vertically center items */
+  justify-content: center; /* Center items horizontally */
+  gap: 20px; /* Add space between logo and form */
+}
+
+.form-logo {
+  height: 50px; /* Adjust size as needed */
+  width: auto;
+}
+
+.player-form form {
+  /* Keep form elements grouped */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center form elements */
+}
+
 .player-form div {
   margin-bottom: 10px;
+  /* Ensure labels and inputs are aligned if needed */
+  display: flex;
+  align-items: center;
+  width: 100%; /* Make div take full width if needed */
+  justify-content: center; /* Center label/input pair */
 }
 
 .player-form label, .roster label {

@@ -174,7 +174,7 @@ const draftType = inject('draftType');
 }
 
 .form-logo {
-  height: 50px; /* Adjust size as needed */
+  height: 100px; /* Adjust size as needed */
   width: auto;
 }
 

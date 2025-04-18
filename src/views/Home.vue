@@ -32,8 +32,8 @@
           (F: {{ activeForwardCount }} | D: {{ activeDefenseCount }} | G: {{ activeGoalieCount }})
         </span>
       </h2>
-      <ul v-if="players.length > 0">
-        <li v-for="player in players" :key="player.id" :class="{ inactive: !player.active }">
+      <ul v-if="sortedRosterPlayers.length > 0">
+        <li v-for="player in sortedRosterPlayers" :key="player.id" :class="{ inactive: !player.active }">
           <span>
             {{ player.name }}
             <!-- Static display for Goalies -->

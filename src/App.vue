@@ -255,13 +255,29 @@ const generateTeams = () => {
       rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'A' ? draftTeamA.push(p) : draftTeamB.push(p));
   }
 
-  const winsTeamA = draftTeamA.reduce((sum, p) => sum + p.wins, 0);
-  const winsTeamB = draftTeamB.reduce((sum, p) => sum + p.wins, 0);
+  // Calculate average win ratio for skaters on each team
+  const skatersTeamA = draftTeamA.filter(p => p.position !== 'G');
+  const skatersTeamB = draftTeamB.filter(p => p.position !== 'G');
+
+  const ratioSumA = skatersTeamA.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const ratioSumB = skatersTeamB.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+
+  const avgRatioA = skatersTeamA.length > 0 ? ratioSumA / skatersTeamA.length : 0;
+  const avgRatioB = skatersTeamB.length > 0 ? ratioSumB / skatersTeamB.length : 0;
+
+  // Store the calculated ratios
+  avgSkaterRatioA.value = avgRatioA;
+  avgSkaterRatioB.value = avgRatioB;
+
+  console.log(`Avg Skater Ratio - Team A: ${avgRatioA.toFixed(3)}, Team B: ${avgRatioB.toFixed(3)}`);
+
   if (numGoalies > 0) {
-    let goalieTeamToggle = winsTeamA <= winsTeamB;
+    // Team with lower average skater win ratio gets the first goalie pick
+    let goalieTeamToggle = avgRatioA <= avgRatioB;
+    console.log(`Assigning first goalie to Team ${goalieTeamToggle ? 'A' : 'B'}`);
     for (const goalie of rankedGoalies) {
       if (goalieTeamToggle) draftTeamA.push(goalie); else draftTeamB.push(goalie);
-      goalieTeamToggle = !goalieTeamToggle;
+      goalieTeamToggle = !goalieTeamToggle; // Alternate for subsequent goalies
     }
   }
 

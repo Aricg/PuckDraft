@@ -120,10 +120,16 @@
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { inject, ref, computed } from 'vue';
 
 // Inject data and methods provided by App.vue
 const players = inject('players');
+
+// Computed property to sort players alphabetically for the roster display
+const sortedRosterPlayers = computed(() => {
+  // Create a shallow copy before sorting to avoid mutating the original injected array directly
+  return [...players.value].sort((a, b) => a.name.localeCompare(b.name));
+});
 const addPlayer = inject('addPlayer');
 const deletePlayer = inject('deletePlayer');
 // vote is removed

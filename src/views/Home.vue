@@ -42,7 +42,7 @@
           </span>
           <label>
             <input type="checkbox" v-model="player.active">
-            Active
+            In
           </label>
           <button @click="deletePlayer(player.id)" class="delete-btn">Delete</button>
         </li>

@@ -8,6 +8,7 @@
         <template v-if="userRole === 'admin'"> |
           <router-link to="/leader">Leaderboard</router-link>
         </template>
+        | <a href="#" @click.prevent="logout">Logout</a>
       </nav>
     </header>
 
@@ -41,6 +42,14 @@ const login = (password, role) => {
     return true; // Indicate success
   }
   return false; // Indicate failure
+};
+
+const logout = () => {
+  isAuthenticated.value = false;
+  userRole.value = null;
+  sessionStorage.removeItem('isAuthenticated');
+  sessionStorage.removeItem('userRole');
+  router.push({ name: 'Login' });
 };
 
 // --- Core State ---

@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="{ 'dark-theme': isDarkMode }">
+  <div id="app">
     <header class="app-header">
       <h1>FNHL beer league</h1>
       <nav>
@@ -7,9 +7,6 @@
         <router-link to="/pick">Top Pick?</router-link> |
         <router-link to="/leader">Leaderboard</router-link>
       </nav>
-      <button @click="toggleTheme" class="theme-toggle-btn">
-        {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
-      </button>
     </header>
 
     <main>
@@ -26,7 +23,6 @@ import { ref, onMounted, watch, computed, provide } from 'vue';
 
 // --- Core State ---
 const players = ref([]); // Master list of players
-const isDarkMode = ref(false); // Theme control
 
 // --- State needed by child components (will be provided) ---
 const newPlayerName = ref('');
@@ -78,11 +74,6 @@ const updateAvgSkaterRatios = () => {
   avgSkaterRatioB.value = skatersTeamB.length > 0 ? ratioSumB / skatersTeamB.length : 0;
 
   console.log(`Updated Avg Skater Ratios - Team A: ${avgSkaterRatioA.value.toFixed(3)}, Team B: ${avgSkaterRatioB.value.toFixed(3)}`);
-};
-
-// --- Theme Toggle ---
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value;
 };
 
 // --- Computed Properties (some provided) ---
@@ -406,29 +397,6 @@ provide('avgSkaterRatioB', avgSkaterRatioB); // Provide Team B ratio
   --nav-link-hover-color: #0056b3;
 }
 
-.dark-theme {
-  /* Dark Theme Variables */
-  --bg-color: #1e1e1e;
-  --text-color: #e0e0e0;
-  --border-color: #555;
-  --section-bg-color: #2a2a2a;
-  --section-border-color: #444;
-  --button-bg-color: #007bff;
-  --button-text-color: #ffffff;
-  --button-hover-bg-color: #3395ff;
-  --delete-button-bg-color: #ff4d4d;
-  --delete-button-hover-bg-color: #ff7070;
-  --vote-button-bg-color: #4CAF50;
-  --vote-button-hover-bg-color: #6fbf73;
-  --inactive-text-color: #777;
-  --drag-over-bg-color: #3a4a3a;
-  --dragging-bg-color: #333;
-  --header-border-color: #555;
-  --nav-link-color: #3395ff;
-  --nav-link-hover-color: #66b0ff;
-}
-
-
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -439,7 +407,6 @@ provide('avgSkaterRatioB', avgSkaterRatioB); // Provide Team B ratio
   min-height: 100vh;
   /* padding-top: 60px; */ /* Removed as header handles spacing */
   box-sizing: border-box;
-  transition: background-color 0.3s, color 0.3s;
 }
 
 .app-header {
@@ -449,7 +416,6 @@ provide('avgSkaterRatioB', avgSkaterRatioB); // Provide Team B ratio
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative; /* For positioning theme toggle */
 }
 
 .app-header h1 {
@@ -481,19 +447,6 @@ main {
 
 /* Styles for components moved to views should be in those view files */
 /* Or keep common styles here if preferred */
-
-.theme-toggle-btn {
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    transform: translateY(-50%); /* Center vertically */
-    padding: 5px 10px;
-    background-color: var(--section-bg-color);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    z-index: 10;
-    cursor: pointer;
-}
 
 /* Keep general button styling if needed globally */
 button {

@@ -200,6 +200,9 @@ export default defineConfig({
     apiPlugin() // Add our custom API plugin
   ],
   server: {
-    host: true // Allows access from network hosts like `fnhl.ca`
+    host: true, // Allows access from network hosts like `fnhl.ca`
+    hmr: {
+      host: 'fnhl.ca'
+    }
   },
 });

@@ -4,8 +4,10 @@
       <h1>FNHL beer league</h1>
       <nav>
         <router-link to="/">Home</router-link> |
-        <router-link to="/pick">Top Pick?</router-link> |
-        <router-link to="/leader">Leaderboard</router-link>
+        <router-link to="/pick">Top Pick?</router-link>
+        <template v-if="userRole === 'admin'"> |
+          <router-link to="/leader">Leaderboard</router-link>
+        </template>
       </nav>
     </header>
 

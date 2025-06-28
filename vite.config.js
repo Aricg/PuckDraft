@@ -182,6 +182,33 @@ function apiPlugin() {
         }
       });
 
+      // --- 404 Handler for undefined routes ---
+      // This middleware should run after specific API handlers.
+      // It checks if a request is for a valid SPA route or a static asset.
+      server.middlewares.use((req, res, next) => {
+        const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+        const pathname = parsedUrl.pathname;
+
+        // Valid client-side routes from your router configuration
+        const validAppRoutes = ['/', '/login', '/leader', '/pick'];
+
+        // Paths to let Vite handle (API, static assets, internal)
+        const isApiCall = pathname.startsWith('/api/');
+        const isViteInternal = pathname.startsWith('/@');
+        const isStaticAsset = /\.\w+($|\?)/.test(pathname); // Matches paths with extensions like .js, .css, .jpg
+
+        // If the request is for a known asset type or a valid app route, let it pass.
+        if (isApiCall || isViteInternal || isStaticAsset || validAppRoutes.includes(pathname)) {
+          return next();
+        }
+
+        // Otherwise, it's an unrecognized path. Return a 404 error.
+        console.log(`[404 Handler] Returning 404 for unrecognized path: ${pathname}`);
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'text/plain');
+        res.end('Not Found');
+      });
+
       // --- Server Shutdown Hook (Optional but good practice) ---
       server.httpServer?.on('close', () => {
         console.log('[HitCounter] Server closing. Saving final hit count...');

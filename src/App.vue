@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <header class="app-header">
+    <header class="app-header" v-if="isAuthenticated">
       <h1>FNHL beer league</h1>
       <nav>
         <router-link to="/">Home</router-link> |
@@ -20,6 +20,26 @@
 <script setup>
 // Keep only the state and logic needed across all routes or for App.vue itself
 import { ref, onMounted, watch, computed, provide } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// --- Auth State ---
+const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true');
+const userRole = ref(sessionStorage.getItem('userRole') || null);
+
+const login = (password, role) => {
+  if (password === 'beer') {
+    isAuthenticated.value = true;
+    userRole.value = role;
+    sessionStorage.setItem('isAuthenticated', 'true');
+    sessionStorage.setItem('userRole', role);
+    loadPlayers(); // Load players on successful login
+    router.push({ name: 'Home' });
+    return true; // Indicate success
+  }
+  return false; // Indicate failure
+};
 
 // --- Core State ---
 const players = ref([]); // Master list of players
@@ -167,7 +187,13 @@ const savePlayers = async () => {
   }
 };
 
-onMounted(loadPlayers);
+onMounted(() => {
+  // On page load/refresh, check if user was already logged in
+  isAuthenticated.value = sessionStorage.getItem('isAuthenticated') === 'true';
+  if (isAuthenticated.value) {
+    loadPlayers();
+  }
+});
 watch(players, savePlayers, { deep: true });
 
 
@@ -339,6 +365,9 @@ const onDrop = (event, targetTeam) => {
 
 
 // --- Provide data and methods to child components ---
+provide('login', login);
+provide('isAuthenticated', isAuthenticated);
+provide('userRole', userRole);
 provide('players', players);
 provide('addPlayer', addPlayer);
 provide('deletePlayer', deletePlayer);

@@ -48,7 +48,7 @@
             <input type="checkbox" v-model="player.active">
             In
           </label>
-          <button @click="deletePlayer(player.id)" class="delete-btn">Delete</button>
+          <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
         </li>
       </ul>
       <p v-else>No players added yet.</p>
@@ -126,6 +126,7 @@ import { inject, ref, computed } from 'vue';
 
 // Inject data and methods provided by App.vue
 const players = inject('players');
+const userRole = inject('userRole');
 
 // Computed property to sort players alphabetically for the roster display
 const sortedRosterPlayers = computed(() => {

@@ -199,5 +199,7 @@ export default defineConfig({
     vue(),
     apiPlugin() // Add our custom API plugin
   ],
-  // server object can be removed if only used for configureServer previously
+  server: {
+    host: true // Allows access from network hosts like `fnhl.ca`
+  },
 });

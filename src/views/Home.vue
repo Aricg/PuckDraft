@@ -24,6 +24,17 @@
       </div>
     </section>
 
+    <!-- Top Pick Banner for Players -->
+    <section class="top-pick-banner" v-if="userRole === 'player'">
+      <router-link to="/pick" class="banner-link">
+        <img src="/FNHL.jpg" alt="FNHL Logo" class="banner-logo">
+        <div class="banner-content">
+          <h2>Play Top Pick?</h2>
+          <p>Help rank players by choosing who is better!</p>
+        </div>
+      </router-link>
+    </section>
+
     <!-- Roster View -->
     <section class="roster">
       <h2>
@@ -373,5 +384,47 @@ button {
   margin-left: 10px;
   color: var(--text-color); /* Use main text color */
   opacity: 0.8; /* Slightly dimmer */
+}
+
+/* Styles for Top Pick Banner */
+.top-pick-banner {
+  padding: 0; /* Remove padding from section to allow link to fill it */
+  overflow: hidden; /* Ensures the child's border-radius is respected */
+}
+
+.banner-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  text-decoration: none;
+  color: var(--text-color);
+  transition: background-color 0.2s;
+}
+
+.banner-link:hover {
+  background-color: var(--drag-over-bg-color); /* A subtle hover effect */
+}
+
+.banner-logo {
+  height: 80px;
+  width: auto;
+  flex-shrink: 0; /* Prevents logo from shrinking */
+}
+
+.banner-content {
+  text-align: left;
+}
+
+.banner-content h2 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  color: var(--nav-link-color); /* Make it look like a link */
+}
+
+.banner-content p {
+  margin: 0;
+  font-size: 0.9em;
 }
 </style>

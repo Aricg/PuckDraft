@@ -37,7 +37,7 @@ const gameStatus = ref({ cancelledFor: null }); // e.g. { cancelledFor: '2025-07
 const nextGameDate = computed(() => {
   const now = new Date();
   const nextFriday = new Date(now.getTime());
-  nextFriday.setHours(21, 0, 0, 0); // Set time to 9 PM
+  nextFriday.setHours(21, 30, 0, 0); // Set time to 9:30 PM
 
   let day = nextFriday.getDay(); // 0=Sun, 5=Fri
   let diff = (5 - day + 7) % 7; // Days until next Friday

@@ -56,6 +56,7 @@
       </div>
       <div v-else>
         <h2>Next Game Countdown</h2>
+        <p><strong>Friday, {{ formattedNextGameDate }} at 9:30 PM</strong></p>
         <div class="countdown">{{ countdownDisplay }}</div>
       </div>
     </section>

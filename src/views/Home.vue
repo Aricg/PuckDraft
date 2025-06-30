@@ -55,8 +55,7 @@
         <p class="cancelled-text">This week's game is CANCELLED.</p>
       </div>
       <div v-else>
-        <h2>Next Game Countdown</h2>
-        <p><strong>Friday, {{ formattedNextGameDate }} at 9:30 PM</strong></p>
+        <h2>Next Game: Friday, {{ formattedNextGameDate }} at 9:30 PM</h2>
         <div class="countdown">{{ countdownDisplay }}</div>
       </div>
     </section>
@@ -192,9 +191,8 @@ const updateCountdown = () => {
   const days = Math.floor(distance / (1000 * 60 * 60 * 24));
   const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-  countdownDisplay.value = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  countdownDisplay.value = `${days}d ${hours}h ${minutes}m`;
 };
 
 onMounted(() => {

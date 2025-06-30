@@ -252,11 +252,12 @@ onUnmounted(() => {
 });
 
 
-// Computed property to sort players alphabetically for the roster display
-const sortedRosterPlayers = computed(() => {
-  // Create a shallow copy before sorting to avoid mutating the original injected array directly
-  return [...players.value].sort((a, b) => a.name.localeCompare(b.name));
-});
+// Use a ref and a watch for sorting to avoid mutation side-effects in computed properties
+const sortedRosterPlayers = ref([]);
+watch(players, (newPlayers) => {
+  // Create a shallow copy, sort it, and update the ref
+  sortedRosterPlayers.value = [...newPlayers].sort((a, b) => a.name.localeCompare(b.name));
+}, { deep: true, immediate: true }); // Use deep and immediate to catch all changes and run on setup
 const addPlayer = inject('addPlayer');
 const deletePlayer = inject('deletePlayer');
 // vote is removed

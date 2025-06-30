@@ -178,7 +178,7 @@ const avgSkaterRatioB = inject('avgSkaterRatioB'); // Inject Team B ratio
 /* Scoped styles for Home view if needed, or keep global styles in App.vue */
 /* Styles specific to sections moved here can be copied from App.vue's <style> */
 /* Basic Styling using variables */
-.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display {
+.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display, .top-pick-banner {
   margin: 20px auto; /* Center sections */
   max-width: 800px; /* Limit width for better readability */
   padding: 15px;

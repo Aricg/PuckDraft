@@ -32,7 +32,10 @@ const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true'
 const userRole = ref(sessionStorage.getItem('userRole') || null);
 
 const login = (password, role) => {
-  if (password === 'beer') {
+  const isAdminLogin = role === 'admin' && password === 'beerbeer';
+  const isPlayerLogin = role === 'player' && password === 'beer';
+
+  if (isAdminLogin || isPlayerLogin) {
     isAuthenticated.value = true;
     userRole.value = role;
     sessionStorage.setItem('isAuthenticated', 'true');

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Add Player Form -->
-    <section class="player-form">
+    <section class="player-form" v-if="userRole === 'admin'">
       <h2>Add New Player</h2>
       <div class="player-form-content">
         <img src="/FNHL.jpg" alt="FNHL Logo" class="form-logo">

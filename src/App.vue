@@ -32,7 +32,7 @@ const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true'
 const userRole = ref(sessionStorage.getItem('userRole') || null);
 
 // --- Game Status State ---
-const gameStatus = ref({ cancelledFor: null, bbqOn: false }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true }
+const gameStatus = ref({ cancelledFor: null, bbqOn: false, message: '' }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true, message: 'Hi' }
 
 const nextGameDate = computed(() => {
   const now = new Date();
@@ -91,14 +91,15 @@ const loadGameStatus = async () => {
     const response = await fetch('/api/gamestatus');
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
-    // Ensure both properties exist to avoid errors in the UI
+    // Ensure all properties exist to avoid errors in the UI
     gameStatus.value = {
       cancelledFor: data.cancelledFor || null,
-      bbqOn: data.bbqOn === true // Default to false if missing or not exactly true
+      bbqOn: data.bbqOn === true, // Default to false if missing or not exactly true
+      message: data.message || ''
     };
   } catch (error) {
     console.error("Failed to load game status:", error);
-    gameStatus.value = { cancelledFor: null, bbqOn: false }; // Reset on error
+    gameStatus.value = { cancelledFor: null, bbqOn: false, message: '' }; // Reset on error
   }
 };
 
@@ -132,6 +133,11 @@ const toggleGameCancellation = () => {
 
 const toggleBbqStatus = () => {
   gameStatus.value.bbqOn = !gameStatus.value.bbqOn;
+  saveGameStatus();
+};
+
+const setMessage = (newMessage) => {
+  gameStatus.value.message = newMessage || '';
   saveGameStatus();
 };
 
@@ -483,6 +489,8 @@ provide('isGameCancelled', isGameCancelled);
 provide('toggleGameCancellation', toggleGameCancellation);
 provide('isBbqOn', computed(() => gameStatus.value.bbqOn));
 provide('toggleBbqStatus', toggleBbqStatus);
+provide('message', computed(() => gameStatus.value.message));
+provide('setMessage', setMessage);
 
 // Provide computed properties
 provide('activeForwardCount', activeForwardCount);

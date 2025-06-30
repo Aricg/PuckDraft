@@ -185,8 +185,8 @@ function apiPlugin() {
       // --- Game Status API Endpoint ---
       const gameStatusFilePath = path.resolve(__dirname, 'data/gamestatus.json');
       if (!fs.existsSync(gameStatusFilePath)) {
-        // Default is not cancelled, and no BBQ.
-        fs.writeFileSync(gameStatusFilePath, JSON.stringify({ cancelledFor: null, bbqOn: false }), 'utf-8');
+        // Default is not cancelled, no BBQ, and no message.
+        fs.writeFileSync(gameStatusFilePath, JSON.stringify({ cancelledFor: null, bbqOn: false, message: '' }), 'utf-8');
         console.log(`Created initial gamestatus file: ${gameStatusFilePath}`);
       }
 

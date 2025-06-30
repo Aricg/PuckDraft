@@ -1,5 +1,9 @@
 <template>
   <div>
+    <!-- Message of the Day for Players -->
+    <section class="player-message" v-if="userRole === 'player' && message">
+      <p>{{ message }}</p>
+    </section>
     <!-- Game Management -->
     <section class="game-management" v-if="userRole === 'admin'">
       <h2>Game Management</h2>
@@ -17,6 +21,16 @@
           <button @click="toggleBbqStatus" :class="isBbqOn ? 'turn-off-btn' : 'turn-on-btn'">
             {{ isBbqOn ? 'Turn BBQ Off' : 'Turn BBQ On' }}
           </button>
+      </div>
+    </section>
+
+    <!-- Message Management -->
+    <section class="message-management" v-if="userRole === 'admin'">
+      <h2>Message for Players</h2>
+      <textarea v-model="adminMessage" rows="3" placeholder="Enter a message to display to players..."></textarea>
+      <div class="message-buttons">
+        <button @click="handleSetMessage" class="set-message-btn">Set Message</button>
+        <button @click="handleClearMessage" class="clear-message-btn">Clear Message</button>
       </div>
     </section>
 
@@ -166,7 +180,7 @@
 </template>
 
 <script setup>
-import { inject, ref, computed, onMounted, onUnmounted } from 'vue';
+import { inject, ref, computed, onMounted, onUnmounted, watch } from 'vue';
 
 // Inject data and methods provided by App.vue
 const players = inject('players');
@@ -176,6 +190,25 @@ const isGameCancelled = inject('isGameCancelled');
 const toggleGameCancellation = inject('toggleGameCancellation');
 const isBbqOn = inject('isBbqOn');
 const toggleBbqStatus = inject('toggleBbqStatus');
+const message = inject('message');
+const setMessage = inject('setMessage');
+
+const adminMessage = ref('');
+
+watch(message, (newMessage) => {
+  adminMessage.value = newMessage;
+}, { immediate: true });
+
+const handleSetMessage = () => {
+  setMessage(adminMessage.value);
+  alert('Message updated!');
+};
+
+const handleClearMessage = () => {
+  adminMessage.value = '';
+  setMessage('');
+  alert('Message cleared!');
+};
 
 // For admin game management display
 const formattedNextGameDate = computed(() => {
@@ -257,8 +290,24 @@ const avgSkaterRatioB = inject('avgSkaterRatioB'); // Inject Team B ratio
 <style scoped>
 /* Scoped styles for Home view if needed, or keep global styles in App.vue */
 /* Styles specific to sections moved here can be copied from App.vue's <style> */
+.player-message {
+  margin: 20px auto; /* Center sections */
+  max-width: 800px; /* Limit width for better readability */
+  padding: 15px;
+  border: 1px solid #ffeeba;
+  background-color: #fff3cd;
+  color: #856404;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.player-message p {
+  margin: 0;
+  font-weight: 500;
+}
+
 /* Basic Styling using variables */
-.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display, .top-pick-banner, .game-management, .next-game-countdown {
+.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display, .top-pick-banner, .game-management, .next-game-countdown, .message-management {
   margin: 20px auto; /* Center sections */
   max-width: 800px; /* Limit width for better readability */
   padding: 15px;
@@ -556,5 +605,40 @@ button {
 .bbq-on-text {
   color: var(--vote-button-bg-color);
   font-weight: bold;
+}
+
+/* Message Management Styling */
+.message-management textarea {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 1em;
+}
+
+.message-management .message-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.message-management .set-message-btn {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+}
+.message-management .set-message-btn:hover {
+  background-color: var(--button-hover-bg-color);
+}
+.message-management .clear-message-btn {
+  background-color: var(--delete-button-bg-color);
+  color: var(--button-text-color);
+}
+.message-management .clear-message-btn:hover {
+  background-color: var(--delete-button-hover-bg-color);
 }
 </style>

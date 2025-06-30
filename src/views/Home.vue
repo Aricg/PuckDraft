@@ -1,5 +1,18 @@
 <template>
   <div>
+    <!-- Game Management -->
+    <section class="game-management" v-if="userRole === 'admin'">
+      <h2>Game Management</h2>
+      <div v-if="!isGameCancelled">
+        <p>Next game is scheduled for <strong>Friday, {{ formattedNextGameDate }}</strong>.</p>
+        <button @click="toggleGameCancellation">Cancel This Week's Game</button>
+      </div>
+      <div v-else>
+        <p>The game for <strong>Friday, {{ formattedNextGameDate }}</strong> is <strong class="cancelled-text">CANCELLED</strong>.</p>
+        <button @click="toggleGameCancellation">Re-enable This Week's Game</button>
+      </div>
+    </section>
+
     <!-- Add Player Form -->
     <section class="player-form" v-if="userRole === 'admin'">
       <h2>Add New Player</h2>
@@ -33,6 +46,18 @@
           <p>Help rank players by choosing who is better!</p>
         </div>
       </router-link>
+    </section>
+
+    <!-- Next Game Countdown for Players -->
+    <section class="next-game-countdown" v-if="userRole === 'player'">
+      <div v-if="isGameCancelled">
+        <h2>Game On?</h2>
+        <p class="cancelled-text">This week's game is CANCELLED.</p>
+      </div>
+      <div v-else>
+        <h2>Next Game Countdown</h2>
+        <div class="countdown">{{ countdownDisplay }}</div>
+      </div>
     </section>
 
     <!-- Roster View -->
@@ -133,11 +158,57 @@
 </template>
 
 <script setup>
-import { inject, ref, computed } from 'vue';
+import { inject, ref, computed, onMounted, onUnmounted } from 'vue';
 
 // Inject data and methods provided by App.vue
 const players = inject('players');
 const userRole = inject('userRole');
+const nextGameDate = inject('nextGameDate');
+const isGameCancelled = inject('isGameCancelled');
+const toggleGameCancellation = inject('toggleGameCancellation');
+
+// For admin game management display
+const formattedNextGameDate = computed(() => {
+  if (!nextGameDate.value) return '';
+  return nextGameDate.value.toLocaleDateString('en-US', { /* year: 'numeric', */ month: 'long', day: 'numeric' });
+});
+
+// For player countdown
+const countdownDisplay = ref('');
+let countdownInterval = null;
+
+const updateCountdown = () => {
+  if (!nextGameDate.value) return;
+  const now = new Date().getTime();
+  const distance = nextGameDate.value.getTime() - now;
+
+  if (distance < 0) {
+    countdownDisplay.value = "It's Game Time!";
+    if (countdownInterval) clearInterval(countdownInterval);
+    return;
+  }
+
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+  countdownDisplay.value = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
+
+onMounted(() => {
+  if (userRole.value === 'player' && !isGameCancelled.value) {
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+  }
+});
+
+onUnmounted(() => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+  }
+});
+
 
 // Computed property to sort players alphabetically for the roster display
 const sortedRosterPlayers = computed(() => {
@@ -178,7 +249,7 @@ const avgSkaterRatioB = inject('avgSkaterRatioB'); // Inject Team B ratio
 /* Scoped styles for Home view if needed, or keep global styles in App.vue */
 /* Styles specific to sections moved here can be copied from App.vue's <style> */
 /* Basic Styling using variables */
-.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display, .top-pick-banner {
+.player-form, .roster, .hot-or-not, .leaderboard, .team-generation, .teams-display, .top-pick-banner, .game-management, .next-game-countdown {
   margin: 20px auto; /* Center sections */
   max-width: 800px; /* Limit width for better readability */
   padding: 15px;
@@ -426,5 +497,29 @@ button {
 .banner-content p {
   margin: 0;
   font-size: 0.9em;
+}
+
+/* Game management and Countdown styling */
+.game-management button {
+  background-color: var(--delete-button-bg-color);
+  color: var(--button-text-color);
+}
+.game-management button:hover {
+  background-color: var(--delete-button-hover-bg-color);
+}
+.game-management div:last-child button {
+    background-color: var(--vote-button-bg-color);
+}
+.game-management div:last-child button:hover {
+    background-color: var(--vote-button-hover-bg-color);
+}
+.cancelled-text {
+  color: var(--delete-button-bg-color);
+  font-weight: bold;
+}
+.countdown {
+  font-size: 2em;
+  font-weight: bold;
+  color: var(--nav-link-color);
 }
 </style>

@@ -182,6 +182,44 @@ function apiPlugin() {
         }
       });
 
+      // --- Game Status API Endpoint ---
+      const gameStatusFilePath = path.resolve(__dirname, 'data/gamestatus.json');
+      if (!fs.existsSync(gameStatusFilePath)) {
+        // Default is not cancelled, for no specific date.
+        fs.writeFileSync(gameStatusFilePath, JSON.stringify({ cancelledFor: null }), 'utf-8');
+        console.log(`Created initial gamestatus file: ${gameStatusFilePath}`);
+      }
+
+      server.middlewares.use('/api/gamestatus', async (req, res, next) => {
+        console.log(`[GameStatus API] Received ${req.method} request`);
+        if (req.method === 'GET') {
+          try {
+            const data = fs.readFileSync(gameStatusFilePath, 'utf-8');
+            res.setHeader('Content-Type', 'application/json');
+            res.end(data);
+          } catch (error) {
+            console.error('[GameStatus API] Error reading gamestatus.json (GET):', error);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ message: 'Error reading game status' }));
+          }
+        } else if (req.method === 'POST') {
+          try {
+            const statusData = await readRequestBody(req);
+            fs.writeFileSync(gameStatusFilePath, JSON.stringify(statusData, null, 2), 'utf-8');
+            res.statusCode = 200;
+            res.end(JSON.stringify({ message: 'Game status saved' }));
+          } catch (error) {
+            console.error('[GameStatus API] Error processing request (POST):', error);
+            res.statusCode = error.message === 'Invalid JSON' ? 400 : 500;
+            res.end(JSON.stringify({ message: error.message || 'Error saving game status' }));
+          }
+        } else {
+          res.statusCode = 405;
+          res.setHeader('Allow', 'GET, POST');
+          res.end(JSON.stringify({ message: `Method ${req.method} Not Allowed` }));
+        }
+      });
+
       // --- 404 Handler for undefined routes ---
       // This middleware should run after specific API handlers.
       // It checks if a request is for a valid SPA route or a static asset.

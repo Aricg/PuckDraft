@@ -31,6 +31,36 @@ const router = useRouter();
 const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true');
 const userRole = ref(sessionStorage.getItem('userRole') || null);
 
+// --- Game Status State ---
+const gameStatus = ref({ cancelledFor: null }); // e.g. { cancelledFor: '2025-07-04' }
+
+const nextGameDate = computed(() => {
+  const now = new Date();
+  const nextFriday = new Date(now.getTime());
+  nextFriday.setHours(21, 0, 0, 0); // Set time to 9 PM
+
+  let day = nextFriday.getDay(); // 0=Sun, 5=Fri
+  let diff = (5 - day + 7) % 7; // Days until next Friday
+  nextFriday.setDate(nextFriday.getDate() + diff);
+
+  // If it's past 9 PM on this calculated Friday, the next game is next week
+  if (now.getTime() > nextFriday.getTime()) {
+      nextFriday.setDate(nextFriday.getDate() + 7);
+  }
+  return nextFriday;
+});
+
+const isGameCancelled = computed(() => {
+  if (!gameStatus.value.cancelledFor) return false;
+
+  const nextGameDay = new Date(nextGameDate.value);
+  nextGameDay.setHours(0, 0, 0, 0);
+
+  const cancelledDate = new Date(gameStatus.value.cancelledFor + 'T00:00:00');
+
+  return cancelledDate.getTime() === nextGameDay.getTime();
+});
+
 const login = (password, role) => {
   const isAdminLogin = role === 'admin' && password === 'beerbeer';
   const isPlayerLogin = role === 'player' && password === 'beer';
@@ -41,6 +71,7 @@ const login = (password, role) => {
     sessionStorage.setItem('isAuthenticated', 'true');
     sessionStorage.setItem('userRole', role);
     loadPlayers(); // Load players on successful login
+    loadGameStatus(); // Load game status on successful login
     router.push({ name: 'Home' });
     return true; // Indicate success
   }
@@ -53,6 +84,46 @@ const logout = () => {
   sessionStorage.removeItem('isAuthenticated');
   sessionStorage.removeItem('userRole');
   router.push({ name: 'Login' });
+};
+
+const loadGameStatus = async () => {
+  try {
+    const response = await fetch('/api/gamestatus');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    gameStatus.value = data;
+  } catch (error) {
+    console.error("Failed to load game status:", error);
+    gameStatus.value = { cancelledFor: null }; // Reset on error
+  }
+};
+
+const saveGameStatus = async () => {
+  try {
+    const response = await fetch('/api/gamestatus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(gameStatus.value),
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  } catch (error) {
+    console.error("Failed to save game status:", error);
+    alert('Failed to save game status. Check console.');
+  }
+};
+
+const toggleGameCancellation = () => {
+  if (isGameCancelled.value) {
+    // If it is cancelled, resume it
+    gameStatus.value.cancelledFor = null;
+  } else {
+    // If it is on, cancel it for the upcoming Friday
+    const yyyy = nextGameDate.value.getFullYear();
+    const mm = String(nextGameDate.value.getMonth() + 1).padStart(2, '0');
+    const dd = String(nextGameDate.value.getDate()).padStart(2, '0');
+    gameStatus.value.cancelledFor = `${yyyy}-${mm}-${dd}`;
+  }
+  saveGameStatus(); // Manually save after changing
 };
 
 // --- Core State ---
@@ -209,6 +280,7 @@ onMounted(() => {
   isAuthenticated.value = sessionStorage.getItem('isAuthenticated') === 'true';
   if (isAuthenticated.value) {
     loadPlayers();
+    loadGameStatus();
   }
 });
 watch(players, savePlayers, { deep: true });
@@ -397,6 +469,9 @@ provide('onDragEnter', onDragEnter);
 provide('onDragLeave', onDragLeave);
 provide('onDrop', onDrop);
 provide('calculateWinRatio', calculateWinRatio);
+provide('nextGameDate', nextGameDate);
+provide('isGameCancelled', isGameCancelled);
+provide('toggleGameCancellation', toggleGameCancellation);
 
 // Provide computed properties
 provide('activeForwardCount', activeForwardCount);

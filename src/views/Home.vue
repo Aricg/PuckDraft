@@ -11,6 +11,13 @@
         <p>The game for <strong>Friday, {{ formattedNextGameDate }}</strong> is <strong class="cancelled-text">CANCELLED</strong>.</p>
         <button @click="toggleGameCancellation">Re-enable This Week's Game</button>
       </div>
+      <hr>
+      <div class="bbq-controls">
+          <p>BBQ Status: <strong :class="{ 'bbq-on-text': isBbqOn }">{{ isBbqOn ? 'ON' : 'OFF' }}</strong></p>
+          <button @click="toggleBbqStatus" :class="isBbqOn ? 'turn-off-btn' : 'turn-on-btn'">
+            {{ isBbqOn ? 'Turn BBQ Off' : 'Turn BBQ On' }}
+          </button>
+      </div>
     </section>
 
     <!-- Add Player Form -->
@@ -57,6 +64,7 @@
       <div v-else>
         <h2>Next Game: Friday, {{ formattedNextGameDate }} at 9:30 PM</h2>
         <div class="countdown">{{ countdownDisplay }}</div>
+        <p v-if="isBbqOn" class="bbq-on-text">🍖 BBQ is ON!</p>
       </div>
     </section>
 
@@ -166,6 +174,8 @@ const userRole = inject('userRole');
 const nextGameDate = inject('nextGameDate');
 const isGameCancelled = inject('isGameCancelled');
 const toggleGameCancellation = inject('toggleGameCancellation');
+const isBbqOn = inject('isBbqOn');
+const toggleBbqStatus = inject('toggleBbqStatus');
 
 // For admin game management display
 const formattedNextGameDate = computed(() => {
@@ -520,5 +530,31 @@ button {
   font-size: 2em;
   font-weight: bold;
   color: var(--nav-link-color);
+}
+
+/* Game management and Countdown styling */
+.game-management hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 20px 0;
+}
+
+.bbq-controls .turn-on-btn {
+  background-color: var(--vote-button-bg-color);
+}
+.bbq-controls .turn-on-btn:hover {
+  background-color: var(--vote-button-hover-bg-color);
+}
+.bbq-controls .turn-off-btn {
+  background-color: var(--delete-button-bg-color);
+  color: var(--button-text-color);
+}
+.bbq-controls .turn-off-btn:hover {
+  background-color: var(--delete-button-hover-bg-color);
+}
+
+.bbq-on-text {
+  color: var(--vote-button-bg-color);
+  font-weight: bold;
 }
 </style>

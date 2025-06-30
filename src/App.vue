@@ -32,7 +32,7 @@ const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true'
 const userRole = ref(sessionStorage.getItem('userRole') || null);
 
 // --- Game Status State ---
-const gameStatus = ref({ cancelledFor: null }); // e.g. { cancelledFor: '2025-07-04' }
+const gameStatus = ref({ cancelledFor: null, bbqOn: false }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true }
 
 const nextGameDate = computed(() => {
   const now = new Date();
@@ -91,10 +91,14 @@ const loadGameStatus = async () => {
     const response = await fetch('/api/gamestatus');
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
-    gameStatus.value = data;
+    // Ensure both properties exist to avoid errors in the UI
+    gameStatus.value = {
+      cancelledFor: data.cancelledFor || null,
+      bbqOn: data.bbqOn === true // Default to false if missing or not exactly true
+    };
   } catch (error) {
     console.error("Failed to load game status:", error);
-    gameStatus.value = { cancelledFor: null }; // Reset on error
+    gameStatus.value = { cancelledFor: null, bbqOn: false }; // Reset on error
   }
 };
 
@@ -124,6 +128,11 @@ const toggleGameCancellation = () => {
     gameStatus.value.cancelledFor = `${yyyy}-${mm}-${dd}`;
   }
   saveGameStatus(); // Manually save after changing
+};
+
+const toggleBbqStatus = () => {
+  gameStatus.value.bbqOn = !gameStatus.value.bbqOn;
+  saveGameStatus();
 };
 
 // --- Core State ---
@@ -472,6 +481,8 @@ provide('calculateWinRatio', calculateWinRatio);
 provide('nextGameDate', nextGameDate);
 provide('isGameCancelled', isGameCancelled);
 provide('toggleGameCancellation', toggleGameCancellation);
+provide('isBbqOn', computed(() => gameStatus.value.bbqOn));
+provide('toggleBbqStatus', toggleBbqStatus);
 
 // Provide computed properties
 provide('activeForwardCount', activeForwardCount);

@@ -155,8 +155,11 @@ const addPlayer = () => {
 };
 
 const deletePlayer = (playerId) => {
-  players.value = players.value.filter(player => player.id !== playerId);
-  // savePlayers() will be called by the watch
+  const playerToDelete = players.value.find(p => p.id === playerId);
+  if (playerToDelete && window.confirm(`Are you sure you want to delete ${playerToDelete.name}?`)) {
+    players.value = players.value.filter(player => player.id !== playerId);
+    // savePlayers() will be called by the watch
+  }
 };
 
 const loadPlayers = async () => {

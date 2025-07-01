@@ -72,6 +72,7 @@ const login = (password, role) => {
     sessionStorage.setItem('userRole', role);
     loadPlayers(); // Load players on successful login
     loadGameStatus(); // Load game status on successful login
+    loadTeamsForCurrentWeek(); // Check for existing teams file
     router.push({ name: 'Home' });
     return true; // Indicate success
   }
@@ -156,6 +157,33 @@ const saveTeams = async () => {
   } catch (error) {
     console.error("Failed to save teams:", error);
     alert('Failed to save teams. Check the console.');
+  }
+};
+
+const loadTeamsForCurrentWeek = async () => {
+  const weekNumber = getWeekNumber(new Date());
+  const filename = `${weekNumber}.teams.json`;
+  try {
+    const response = await fetch(`/api/teams?filename=${filename}`);
+    if (response.ok) {
+      const teamsData = await response.json();
+      teamA.value = teamsData.teamA || [];
+      teamB.value = teamsData.teamB || [];
+      avgSkaterRatioA.value = teamsData.avgSkaterRatioA || 0;
+      avgSkaterRatioB.value = teamsData.avgSkaterRatioB || 0;
+      showTeams.value = true;
+      console.log(`Successfully loaded teams from ${filename}`);
+    } else if (response.status === 404) {
+      console.log(`No teams file found for this week (${filename}).`);
+      // Reset teams state if no file is found
+      teamA.value = [];
+      teamB.value = [];
+      showTeams.value = false;
+    } else {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Failed to load teams for current week:", error);
   }
 };
 
@@ -338,6 +366,7 @@ onMounted(() => {
   if (isAuthenticated.value) {
     loadPlayers();
     loadGameStatus();
+    loadTeamsForCurrentWeek();
   }
 });
 watch(players, savePlayers, { deep: true });

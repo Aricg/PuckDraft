@@ -222,8 +222,30 @@ function apiPlugin() {
 
       // --- Teams API Endpoint ---
       server.middlewares.use('/api/teams', async (req, res, next) => {
-        console.log(`[Teams API] Received ${req.method} request`);
-        if (req.method === 'POST') {
+        console.log(`[Teams API] Received ${req.method} request for ${req.url}`);
+        if (req.method === 'GET') {
+          const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+          const filename = parsedUrl.searchParams.get('filename');
+          if (!filename) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ message: 'Missing filename query parameter' }));
+          }
+          try {
+            const teamsFilePath = path.resolve(__dirname, 'data', filename);
+            if (fs.existsSync(teamsFilePath)) {
+              const data = fs.readFileSync(teamsFilePath, 'utf-8');
+              res.setHeader('Content-Type', 'application/json');
+              res.end(data);
+            } else {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ message: 'Teams file not found' }));
+            }
+          } catch (error) {
+            console.error('[Teams API] Error reading teams file (GET):', error);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ message: 'Error reading teams data' }));
+          }
+        } else if (req.method === 'POST') {
           try {
             const { filename, teams } = await readRequestBody(req);
             if (!filename || !teams) {
@@ -241,7 +263,7 @@ function apiPlugin() {
           }
         } else {
           res.statusCode = 405;
-          res.setHeader('Allow', 'POST');
+          res.setHeader('Allow', 'GET, POST');
           res.end(JSON.stringify({ message: `Method ${req.method} Not Allowed` }));
         }
       });

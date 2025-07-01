@@ -220,6 +220,32 @@ function apiPlugin() {
         }
       });
 
+      // --- Teams API Endpoint ---
+      server.middlewares.use('/api/teams', async (req, res, next) => {
+        console.log(`[Teams API] Received ${req.method} request`);
+        if (req.method === 'POST') {
+          try {
+            const { filename, teams } = await readRequestBody(req);
+            if (!filename || !teams) {
+                res.statusCode = 400;
+                return res.end(JSON.stringify({ message: 'Missing filename or teams data' }));
+            }
+            const teamsFilePath = path.resolve(__dirname, 'data', filename);
+            fs.writeFileSync(teamsFilePath, JSON.stringify(teams, null, 2), 'utf-8');
+            res.statusCode = 200;
+            res.end(JSON.stringify({ message: 'Teams saved successfully' }));
+          } catch (error) {
+            console.error('[Teams API] Error processing request (POST):', error);
+            res.statusCode = error.message === 'Invalid JSON' ? 400 : 500;
+            res.end(JSON.stringify({ message: error.message || 'Error saving teams data' }));
+          }
+        } else {
+          res.statusCode = 405;
+          res.setHeader('Allow', 'POST');
+          res.end(JSON.stringify({ message: `Method ${req.method} Not Allowed` }));
+        }
+      });
+
       // --- 404 Handler for undefined routes ---
       // This middleware should run after specific API handlers.
       // It checks if a request is for a valid SPA route or a static asset.

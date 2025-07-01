@@ -117,6 +117,48 @@ const saveGameStatus = async () => {
   }
 };
 
+// Helper function to get the ISO week number for a date
+const getWeekNumber = (d) => {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  // Set to nearest Thursday: current date + 4 - current day number
+  // Make Sunday's day number 7
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  // Get first day of year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  // Calculate full weeks to nearest Thursday
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  // Return week number
+  return weekNo;
+};
+
+const saveTeams = async () => {
+  if (teamA.value.length === 0 && teamB.value.length === 0) {
+    console.log("Not saving empty teams.");
+    return;
+  }
+  const weekNumber = getWeekNumber(new Date());
+  const filename = `${weekNumber}.teams.json`;
+  const teamsData = {
+    teamA: teamA.value,
+    teamB: teamB.value,
+    avgSkaterRatioA: avgSkaterRatioA.value,
+    avgSkaterRatioB: avgSkaterRatioB.value
+  };
+
+  try {
+    const response = await fetch('/api/teams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, teams: teamsData }),
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    console.log(`Teams saved to ${filename}`);
+  } catch (error) {
+    console.error("Failed to save teams:", error);
+    alert('Failed to save teams. Check the console.');
+  }
+};
+
 const toggleGameCancellation = () => {
   if (isGameCancelled.value) {
     // If it is cancelled, resume it
@@ -419,6 +461,7 @@ const generateTeams = () => {
   updateAvgSkaterRatios();
 
   console.log("Final Sorted and Shuffled Teams Generated:", teamA.value, teamB.value);
+  saveTeams();
 };
 
 const onDragStart = (event, player, team) => {
@@ -465,6 +508,7 @@ const onDrop = (event, targetTeam) => {
   updateAvgSkaterRatios();
 
   draggedPlayer.value = null; sourceTeam.value = null;
+  saveTeams();
 };
 
 

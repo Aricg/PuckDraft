@@ -129,7 +129,7 @@
 
     <!-- Generated Teams Display -->
     <section class="teams-display" v-if="showTeams">
-        <h2>Generated Teams</h2>
+        <h2>Generated Teams for {{ formattedNextGameDate }}</h2>
         <div class="teams-container">
             <div
               class="team-list"

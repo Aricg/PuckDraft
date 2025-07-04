@@ -144,18 +144,18 @@
             <div
               class="team-list"
               @dragover.prevent="onDragOver"
-              @dragenter.prevent="onDragEnter($event, 'A')"
-              @dragleave="onDragLeave($event, 'A')"
-              @drop="onDrop($event, 'A')"
+              @dragenter.prevent="onDragEnter($event, 'Light')"
+              @dragleave="onDragLeave($event, 'Light')"
+              @drop="onDrop($event, 'Light')"
             >
-                <h3>Team A</h3>
-                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioA * 100).toFixed(1) }}%</p>
+                <h3>Light</h3>
+                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioLight * 100).toFixed(1) }}%</p>
                 <ul>
                     <li
-                      v-for="player in teamA"
+                      v-for="player in teamLight"
                       :key="player.id"
                       draggable="true"
-                      @dragstart="onDragStart($event, player, 'A')"
+                      @dragstart="onDragStart($event, player, 'Light')"
                       @dragend="onDragEnd"
                     >
                         {{ player.name }} ({{ player.position }})
@@ -165,18 +165,18 @@
             <div
               class="team-list"
               @dragover.prevent="onDragOver"
-              @dragenter.prevent="onDragEnter($event, 'B')"
-              @dragleave="onDragLeave($event, 'B')"
-              @drop="onDrop($event, 'B')"
+              @dragenter.prevent="onDragEnter($event, 'Dark')"
+              @dragleave="onDragLeave($event, 'Dark')"
+              @drop="onDrop($event, 'Dark')"
             >
-                <h3>Team B</h3>
-                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioB * 100).toFixed(1) }}%</p>
+                <h3>Dark</h3>
+                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioDark * 100).toFixed(1) }}%</p>
                 <ul>
                      <li
-                       v-for="player in teamB"
+                       v-for="player in teamDark"
                        :key="player.id"
                        draggable="true"
-                       @dragstart="onDragStart($event, player, 'B')"
+                       @dragstart="onDragStart($event, player, 'Dark')"
                        @dragend="onDragEnd"
                      >
                         {{ player.name }} ({{ player.position }})
@@ -291,12 +291,12 @@ const activePlayers = inject('activePlayers');
 const newPlayerName = inject('newPlayerName');
 const newPlayerPosition = inject('newPlayerPosition');
 // playerA and playerB are removed
-const teamA = inject('teamA');
-const teamB = inject('teamB');
+const teamLight = inject('teamLight');
+const teamDark = inject('teamDark');
 const showTeams = inject('showTeams');
 const draftType = inject('draftType');
-const avgSkaterRatioA = inject('avgSkaterRatioA'); // Inject Team A ratio
-const avgSkaterRatioB = inject('avgSkaterRatioB'); // Inject Team B ratio
+const avgSkaterRatioLight = inject('avgSkaterRatioLight'); // Inject Light ratio
+const avgSkaterRatioDark = inject('avgSkaterRatioDark'); // Inject Dark ratio
 
 </script>
 

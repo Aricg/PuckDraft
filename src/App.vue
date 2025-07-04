@@ -138,17 +138,17 @@ const saveTeams = async () => {
     console.log("Teams are locked. Not saving modifications.");
     return;
   }
-  if (teamA.value.length === 0 && teamB.value.length === 0) {
+  if (teamLight.value.length === 0 && teamDark.value.length === 0) {
     console.log("Not saving empty teams.");
     return;
   }
   const weekNumber = getWeekNumber(new Date());
   const filename = `${weekNumber}.teams.json`;
   const teamsData = {
-    teamA: teamA.value,
-    teamB: teamB.value,
-    avgSkaterRatioA: avgSkaterRatioA.value,
-    avgSkaterRatioB: avgSkaterRatioB.value
+    teamLight: teamLight.value,
+    teamDark: teamDark.value,
+    avgSkaterRatioLight: avgSkaterRatioLight.value,
+    avgSkaterRatioDark: avgSkaterRatioDark.value
   };
 
   try {
@@ -172,17 +172,17 @@ const loadTeamsForCurrentWeek = async () => {
     const response = await fetch(`/api/teams?filename=${filename}`);
     if (response.ok) {
       const teamsData = await response.json();
-      teamA.value = teamsData.teamA || [];
-      teamB.value = teamsData.teamB || [];
-      avgSkaterRatioA.value = teamsData.avgSkaterRatioA || 0;
-      avgSkaterRatioB.value = teamsData.avgSkaterRatioB || 0;
+      teamLight.value = teamsData.teamLight || [];
+      teamDark.value = teamsData.teamDark || [];
+      avgSkaterRatioLight.value = teamsData.avgSkaterRatioLight || 0;
+      avgSkaterRatioDark.value = teamsData.avgSkaterRatioDark || 0;
       showTeams.value = true;
       console.log(`Successfully loaded teams from ${filename}`);
     } else if (response.status === 404) {
       console.log(`No teams file found for this week (${filename}).`);
       // Reset teams state if no file is found
-      teamA.value = [];
-      teamB.value = [];
+      teamLight.value = [];
+      teamDark.value = [];
       showTeams.value = false;
     } else {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -230,14 +230,14 @@ const newPlayerName = ref('');
 const newPlayerPosition = ref('F');
 const playerA = ref(null);
 const playerB = ref(null);
-const teamA = ref([]);
-const teamB = ref([]);
+const teamLight = ref([]);
+const teamDark = ref([]);
 const showTeams = ref(false);
 const draftType = ref('serpentine');
 const draggedPlayer = ref(null);
 const sourceTeam = ref(null);
-const avgSkaterRatioA = ref(0); // Ref to store Team A's avg skater ratio
-const avgSkaterRatioB = ref(0); // Ref to store Team B's avg skater ratio
+const avgSkaterRatioLight = ref(0); // Ref to store Light's avg skater ratio
+const avgSkaterRatioDark = ref(0); // Ref to store Dark's avg skater ratio
 
 // Helper function to shuffle an array (Fisher-Yates algorithm)
 const shuffleArray = (array) => {
@@ -265,16 +265,16 @@ const sortAndShuffleTeam = (team) => {
 
 // Helper function to calculate and update average skater win ratios for teams
 const updateAvgSkaterRatios = () => {
-  const skatersTeamA = teamA.value.filter(p => p.position !== 'G');
-  const skatersTeamB = teamB.value.filter(p => p.position !== 'G');
+  const skatersLight = teamLight.value.filter(p => p.position !== 'G');
+  const skatersDark = teamDark.value.filter(p => p.position !== 'G');
 
-  const ratioSumA = skatersTeamA.reduce((sum, p) => sum + calculateWinRatio(p), 0);
-  const ratioSumB = skatersTeamB.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const ratioSumLight = skatersLight.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const ratioSumDark = skatersDark.reduce((sum, p) => sum + calculateWinRatio(p), 0);
 
-  avgSkaterRatioA.value = skatersTeamA.length > 0 ? ratioSumA / skatersTeamA.length : 0;
-  avgSkaterRatioB.value = skatersTeamB.length > 0 ? ratioSumB / skatersTeamB.length : 0;
+  avgSkaterRatioLight.value = skatersLight.length > 0 ? ratioSumLight / skatersLight.length : 0;
+  avgSkaterRatioDark.value = skatersDark.length > 0 ? ratioSumDark / skatersDark.length : 0;
 
-  console.log(`Updated Avg Skater Ratios - Team A: ${avgSkaterRatioA.value.toFixed(3)}, Team B: ${avgSkaterRatioB.value.toFixed(3)}`);
+  console.log(`Updated Avg Skater Ratios - Light: ${avgSkaterRatioLight.value.toFixed(3)}, Dark: ${avgSkaterRatioDark.value.toFixed(3)}`);
 };
 
 // --- Computed Properties (some provided) ---
@@ -442,7 +442,7 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
 
 const getPickOrder = (numPicks, firstPicker, type) => {
   const order = [];
-  const secondPicker = firstPicker === 'A' ? 'B' : 'A';
+  const secondPicker = firstPicker === 'Light' ? 'Dark' : 'Light';
 
   if (type === 'simple') {
     let currentPicker = firstPicker;
@@ -482,47 +482,47 @@ const generateTeams = () => {
   const numForwards = rankedForwards.length; const numDefensemen = rankedDefensemen.length; const numGoalies = rankedGoalies.length;
   if (numForwards + numDefensemen + numGoalies < 2) { alert("Need at least two active players."); return; }
 
-  const draftTeamA = []; const draftTeamB = []; showTeams.value = true;
-  let firstForwardPicker = 'A';
+  const draftTeamLight = []; const draftTeamDark = []; showTeams.value = true;
+  let firstForwardPicker = 'Light';
   if (numForwards > 0) {
       const forwardPickOrder = getPickOrder(numForwards, firstForwardPicker, draftType.value);
-      rankedForwards.forEach((p, i) => forwardPickOrder[i] === 'A' ? draftTeamA.push(p) : draftTeamB.push(p));
+      rankedForwards.forEach((p, i) => forwardPickOrder[i] === 'Light' ? draftTeamLight.push(p) : draftTeamDark.push(p));
   }
   if (numDefensemen > 0) {
-      const firstDefensemanPicker = 'B';
+      const firstDefensemanPicker = 'Dark';
       const defensemanPickOrder = getPickOrder(numDefensemen, firstDefensemanPicker, draftType.value);
-      rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'A' ? draftTeamA.push(p) : draftTeamB.push(p));
+      rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'Light' ? draftTeamLight.push(p) : draftTeamDark.push(p));
   }
 
   // Calculate initial average skater win ratio to determine goalie pick order
   // Note: This uses the draftTeam arrays *before* goalies are added
-  const initialSkatersA = draftTeamA.filter(p => p.position !== 'G');
-  const initialSkatersB = draftTeamB.filter(p => p.position !== 'G');
-  const initialRatioSumA = initialSkatersA.reduce((sum, p) => sum + calculateWinRatio(p), 0);
-  const initialRatioSumB = initialSkatersB.reduce((sum, p) => sum + calculateWinRatio(p), 0);
-  const initialAvgRatioA = initialSkatersA.length > 0 ? initialRatioSumA / initialSkatersA.length : 0;
-  const initialAvgRatioB = initialSkatersB.length > 0 ? initialRatioSumB / initialSkatersB.length : 0;
+  const initialSkatersLight = draftTeamLight.filter(p => p.position !== 'G');
+  const initialSkatersDark = draftTeamDark.filter(p => p.position !== 'G');
+  const initialRatioSumLight = initialSkatersLight.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const initialRatioSumDark = initialSkatersDark.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+  const initialAvgRatioLight = initialSkatersLight.length > 0 ? initialRatioSumLight / initialSkatersLight.length : 0;
+  const initialAvgRatioDark = initialSkatersDark.length > 0 ? initialRatioSumDark / initialSkatersDark.length : 0;
 
-  console.log(`Initial Avg Skater Ratio (for goalie pick) - Team A: ${initialAvgRatioA.toFixed(3)}, Team B: ${initialAvgRatioB.toFixed(3)}`);
+  console.log(`Initial Avg Skater Ratio (for goalie pick) - Light: ${initialAvgRatioLight.toFixed(3)}, Dark: ${initialAvgRatioDark.toFixed(3)}`);
 
   if (numGoalies > 0) {
     // Team with lower average skater win ratio gets the first goalie pick
-    let goalieTeamToggle = initialAvgRatioA <= initialAvgRatioB;
-    console.log(`Assigning first goalie to Team ${goalieTeamToggle ? 'A' : 'B'}`);
+    let goalieTeamToggle = initialAvgRatioLight <= initialAvgRatioDark;
+    console.log(`Assigning first goalie to Team ${goalieTeamToggle ? 'Light' : 'Dark'}`);
     for (const goalie of rankedGoalies) {
-      if (goalieTeamToggle) draftTeamA.push(goalie); else draftTeamB.push(goalie);
+      if (goalieTeamToggle) draftTeamLight.push(goalie); else draftTeamDark.push(goalie);
       goalieTeamToggle = !goalieTeamToggle; // Alternate for subsequent goalies
     }
   }
 
   // Sort by position, then shuffle within each position group
-  teamA.value = sortAndShuffleTeam(draftTeamA);
-  teamB.value = sortAndShuffleTeam(draftTeamB);
+  teamLight.value = sortAndShuffleTeam(draftTeamLight);
+  teamDark.value = sortAndShuffleTeam(draftTeamDark);
 
   // Update the displayed average skater ratios based on the final teams
   updateAvgSkaterRatios();
 
-  console.log("Final Sorted and Shuffled Teams Generated:", teamA.value, teamB.value);
+  console.log("Final Sorted and Shuffled Teams Generated:", teamLight.value, teamDark.value);
   saveTeams();
 };
 
@@ -557,14 +557,14 @@ const onDrop = (event, targetTeam) => {
   const playerToMove = draggedPlayer.value;
   if (!playerToMove || sourceTeam.value === targetTeam) return;
 
-  if (sourceTeam.value === 'A') teamA.value = teamA.value.filter(p => p.id !== playerToMove.id);
-  else teamB.value = teamB.value.filter(p => p.id !== playerToMove.id);
-  if (targetTeam === 'A') teamA.value.push(playerToMove);
-  else teamB.value.push(playerToMove);
+  if (sourceTeam.value === 'Light') teamLight.value = teamLight.value.filter(p => p.id !== playerToMove.id);
+  else teamDark.value = teamDark.value.filter(p => p.id !== playerToMove.id);
+  if (targetTeam === 'Light') teamLight.value.push(playerToMove);
+  else teamDark.value.push(playerToMove);
 
   // Re-sort and shuffle the teams after manual drag/drop
-  teamA.value = sortAndShuffleTeam(teamA.value);
-  teamB.value = sortAndShuffleTeam(teamB.value);
+  teamLight.value = sortAndShuffleTeam(teamLight.value);
+  teamDark.value = sortAndShuffleTeam(teamDark.value);
 
   // Update the average skater ratios after the drop
   updateAvgSkaterRatios();
@@ -612,12 +612,12 @@ provide('newPlayerName', newPlayerName);
 provide('newPlayerPosition', newPlayerPosition);
 provide('playerA', playerA);
 provide('playerB', playerB);
-provide('teamA', teamA);
-provide('teamB', teamB);
+provide('teamLight', teamLight);
+provide('teamDark', teamDark);
 provide('showTeams', showTeams);
 provide('draftType', draftType);
-provide('avgSkaterRatioA', avgSkaterRatioA); // Provide Team A ratio
-provide('avgSkaterRatioB', avgSkaterRatioB); // Provide Team B ratio
+provide('avgSkaterRatioLight', avgSkaterRatioLight); // Provide Light ratio
+provide('avgSkaterRatioDark', avgSkaterRatioDark); // Provide Dark ratio
 
 </script>
 

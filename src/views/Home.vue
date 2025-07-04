@@ -96,6 +96,9 @@
         <span class="player-count">
           (F: {{ activeForwardCount }} | D: {{ activeDefenseCount }} | G: {{ activeGoalieCount }})
         </span>
+        <span v-if="(activeForwardCount + activeDefenseCount) === 20 && activeGoalieCount === 2" class="roster-full-message">
+          - WE ARE FULL!
+        </span>
       </h2>
       <ul v-if="sortedRosterPlayers.length > 0">
         <li v-for="player in sortedRosterPlayers" :key="player.id" :class="{ inactive: !player.active }">
@@ -674,5 +677,12 @@ button {
 }
 .message-management .clear-message-btn:hover {
   background-color: var(--delete-button-hover-bg-color);
+}
+
+.roster-full-message {
+  color: var(--vote-button-bg-color);
+  font-weight: bold;
+  font-style: italic;
+  margin-left: 10px;
 }
 </style>

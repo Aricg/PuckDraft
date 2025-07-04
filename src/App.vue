@@ -441,17 +441,37 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
 }, { deep: true });
 
 const getPickOrder = (numPicks, firstPicker, type) => {
-  const order = []; let currentPicker = firstPicker;
+  const order = [];
   const secondPicker = firstPicker === 'A' ? 'B' : 'A';
+
   if (type === 'simple') {
+    let currentPicker = firstPicker;
     for (let i = 0; i < numPicks; i++) {
-      order.push(currentPicker); currentPicker = currentPicker === firstPicker ? secondPicker : firstPicker;
+      order.push(currentPicker);
+      currentPicker = (currentPicker === firstPicker) ? secondPicker : firstPicker;
     }
-  } else {
+  } else { // Serpentine (A, B, B, A)
     for (let i = 0; i < numPicks; i++) {
-      order.push((i % 4 === 0 || i % 4 === 3) ? firstPicker : secondPicker);
+      const round = Math.floor(i / 2); // Round (0, 1, 2...)
+      const pickInRound = i % 2; // Pick within the round (0 or 1)
+
+      if (round % 2 === 1) { // Odd rounds (1, 3...) are reverse order
+        order.push(pickInRound === 0 ? secondPicker : firstPicker);
+      } else { // Even rounds (0, 2...) are standard order
+        order.push(pickInRound === 0 ? firstPicker : secondPicker);
+      }
     }
-  } return order;
+
+    // Correction for odd numbers to ensure team sizes are balanced.
+    // The first picker should always get the extra player.
+    if (numPicks % 2 !== 0) {
+      const firstPickerCount = order.filter(p => p === firstPicker).length;
+      if (firstPickerCount < numPicks - firstPickerCount) {
+        order[numPicks - 1] = firstPicker; // Swap last pick if balance is wrong
+      }
+    }
+  }
+  return order;
 };
 
 const generateTeams = () => {

@@ -136,7 +136,7 @@
 
     <!-- Generated Teams Display -->
     <section class="teams-display" v-if="showTeams" :class="{ 'locked-for-player-view': userRole === 'player' && isTeamsLocked }">
-        <h2>Generated Teams for {{ formattedNextGameDate }}</h2>
+        <h2>Teams for {{ formattedNextGameDate }}</h2>
         <div class="teams-container">
             <div
               class="team-list"

@@ -32,7 +32,7 @@ const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true'
 const userRole = ref(sessionStorage.getItem('userRole') || null);
 
 // --- Game Status State ---
-const gameStatus = ref({ cancelledFor: null, bbqOn: false, message: '' }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true, message: 'Hi' }
+const gameStatus = ref({ cancelledFor: null, bbqOn: false, message: '', teamsLocked: false }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true, message: 'Hi' }
 
 const nextGameDate = computed(() => {
   const now = new Date();
@@ -96,11 +96,12 @@ const loadGameStatus = async () => {
     gameStatus.value = {
       cancelledFor: data.cancelledFor || null,
       bbqOn: data.bbqOn === true, // Default to false if missing or not exactly true
-      message: data.message || ''
+      message: data.message || '',
+      teamsLocked: data.teamsLocked === true // Default to false
     };
   } catch (error) {
     console.error("Failed to load game status:", error);
-    gameStatus.value = { cancelledFor: null, bbqOn: false, message: '' }; // Reset on error
+    gameStatus.value = { cancelledFor: null, bbqOn: false, message: '', teamsLocked: false }; // Reset on error
   }
 };
 
@@ -133,6 +134,10 @@ const getWeekNumber = (d) => {
 };
 
 const saveTeams = async () => {
+  if (gameStatus.value.teamsLocked) {
+    console.log("Teams are locked. Not saving modifications.");
+    return;
+  }
   if (teamA.value.length === 0 && teamB.value.length === 0) {
     console.log("Not saving empty teams.");
     return;
@@ -208,6 +213,11 @@ const toggleBbqStatus = () => {
 
 const setMessage = (newMessage) => {
   gameStatus.value.message = newMessage || '';
+  saveGameStatus();
+};
+
+const toggleTeamsLock = () => {
+  gameStatus.value.teamsLocked = !gameStatus.value.teamsLocked;
   saveGameStatus();
 };
 
@@ -567,6 +577,8 @@ provide('isBbqOn', computed(() => gameStatus.value.bbqOn));
 provide('toggleBbqStatus', toggleBbqStatus);
 provide('message', computed(() => gameStatus.value.message));
 provide('setMessage', setMessage);
+provide('isTeamsLocked', computed(() => gameStatus.value.teamsLocked));
+provide('toggleTeamsLock', toggleTeamsLock);
 
 // Provide computed properties
 provide('activeForwardCount', activeForwardCount);

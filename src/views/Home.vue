@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="home-container">
     <!-- Message of the Day for Players -->
     <section class="player-message" v-if="userRole === 'player' && message">
       <p>{{ message }}</p>
@@ -21,6 +21,13 @@
           <button @click="toggleBbqStatus" :class="isBbqOn ? 'turn-off-btn' : 'turn-on-btn'">
             {{ isBbqOn ? 'Turn BBQ Off' : 'Turn BBQ On' }}
           </button>
+      </div>
+      <hr>
+      <div class="lock-controls">
+        <p>Teams Status: <strong :class="{ 'locked-text': isTeamsLocked }">{{ isTeamsLocked ? 'LOCKED' : 'UNLOCKED' }}</strong></p>
+        <button @click="toggleTeamsLock" :class="isTeamsLocked ? 'turn-on-btn' : 'lock-btn'">
+          {{ isTeamsLocked ? 'Unlock Teams' : 'Lock Teams' }}
+        </button>
       </div>
     </section>
 
@@ -128,7 +135,7 @@
      </section>
 
     <!-- Generated Teams Display -->
-    <section class="teams-display" v-if="showTeams">
+    <section class="teams-display" v-if="showTeams" :class="{ 'locked-for-player-view': userRole === 'player' && isTeamsLocked }">
         <h2>Generated Teams for {{ formattedNextGameDate }}</h2>
         <div class="teams-container">
             <div
@@ -192,6 +199,8 @@ const isBbqOn = inject('isBbqOn');
 const toggleBbqStatus = inject('toggleBbqStatus');
 const message = inject('message');
 const setMessage = inject('setMessage');
+const isTeamsLocked = inject('isTeamsLocked');
+const toggleTeamsLock = inject('toggleTeamsLock');
 
 const adminMessage = ref('');
 
@@ -289,9 +298,19 @@ const avgSkaterRatioB = inject('avgSkaterRatioB'); // Inject Team B ratio
 </script>
 
 <style scoped>
+.home-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.teams-display.locked-for-player-view {
+  order: -2; /* Move to near the top for players when locked */
+}
+
 /* Scoped styles for Home view if needed, or keep global styles in App.vue */
 /* Styles specific to sections moved here can be copied from App.vue's <style> */
 .player-message {
+  order: -3; /* Ensure message is always first */
   margin: 20px auto; /* Center sections */
   max-width: 800px; /* Limit width for better readability */
   padding: 15px;
@@ -605,6 +624,20 @@ button {
 
 .bbq-on-text {
   color: var(--vote-button-bg-color);
+  font-weight: bold;
+}
+
+/* Team Lock Styling */
+.lock-controls .lock-btn {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+}
+.lock-controls .lock-btn:hover {
+  background-color: var(--button-hover-bg-color);
+}
+/* Unlock button uses .turn-on-btn styles already defined in bbq-controls */
+.locked-text {
+  color: var(--delete-button-bg-color);
   font-weight: bold;
 }
 

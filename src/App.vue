@@ -172,10 +172,11 @@ const loadTeamsForCurrentWeek = async () => {
     const response = await fetch(`/api/teams?filename=${filename}`);
     if (response.ok) {
       const teamsData = await response.json();
-      teamLight.value = teamsData.teamLight || [];
-      teamDark.value = teamsData.teamDark || [];
-      avgSkaterRatioLight.value = teamsData.avgSkaterRatioLight || 0;
-      avgSkaterRatioDark.value = teamsData.avgSkaterRatioDark || 0;
+      // Add backward compatibility for old team files
+      teamLight.value = teamsData.teamLight || teamsData.teamA || [];
+      teamDark.value = teamsData.teamDark || teamsData.teamB || [];
+      avgSkaterRatioLight.value = teamsData.avgSkaterRatioLight || teamsData.avgSkaterRatioA || 0;
+      avgSkaterRatioDark.value = teamsData.avgSkaterRatioDark || teamsData.avgSkaterRatioB || 0;
       showTeams.value = true;
       console.log(`Successfully loaded teams from ${filename}`);
     } else if (response.status === 404) {

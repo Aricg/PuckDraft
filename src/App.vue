@@ -213,6 +213,7 @@ const setMessage = (newMessage) => {
 
 // --- Core State ---
 const players = ref([]); // Master list of players
+const isPlayersLoaded = ref(false); // Flag to prevent saving before initial load
 
 // --- State needed by child components (will be provided) ---
 const newPlayerName = ref('');
@@ -338,6 +339,7 @@ const loadPlayers = async () => {
             score: undefined
         };
     }).filter(player => player.id !== undefined);
+    isPlayersLoaded.value = true; // Enable saving now that data is loaded
     getRandomPair(); // Still need to get initial pair if on home page
   } catch (error) {
     console.error("Failed to load players:", error);
@@ -347,6 +349,7 @@ const loadPlayers = async () => {
 };
 
 const savePlayers = async () => {
+  if (!isPlayersLoaded.value) return; // Do not save until initial load is complete
   try {
     const response = await fetch('/api/players', {
       method: 'POST',

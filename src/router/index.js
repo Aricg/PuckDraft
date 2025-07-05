@@ -3,6 +3,7 @@ import Home from '../views/Home.vue';
 import Leaderboard from '../views/Leaderboard.vue';
 import Pick from '../views/Pick.vue'; // Import the new component
 import Login from '../views/Login.vue';
+import PreviousGames from '../views/PreviousGames.vue';
 
 const routes = [
   {
@@ -26,6 +27,12 @@ const routes = [
     path: '/pick', // Define the path
     name: 'Pick',   // Give it a name
     component: Pick, // Assign the component
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/previous-games',
+    name: 'PreviousGames',
+    component: PreviousGames,
     meta: { requiresAuth: true },
   },
 ];

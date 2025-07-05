@@ -220,6 +220,21 @@ function apiPlugin() {
         }
       });
 
+      // --- Previous Games API Endpoint ---
+      server.middlewares.use('/api/previous-games', (req, res, next) => {
+        const dataDir = path.resolve(__dirname, 'data');
+        try {
+          const files = fs.readdirSync(dataDir);
+          const teamFiles = files.filter(file => /^\d+\.teams\.json$/.test(file));
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(teamFiles));
+        } catch (error) {
+          console.error('[PreviousGames API] Error reading data directory:', error);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ message: 'Error reading game files' }));
+        }
+      });
+
       // --- Teams API Endpoint ---
       server.middlewares.use('/api/teams', async (req, res, next) => {
         console.log(`[Teams API] Received ${req.method} request for ${req.url}`);
@@ -247,19 +262,38 @@ function apiPlugin() {
           }
         } else if (req.method === 'POST') {
           try {
-            const { filename, teams } = await readRequestBody(req);
-            if (!filename || !teams) {
-                res.statusCode = 400;
-                return res.end(JSON.stringify({ message: 'Missing filename or teams data' }));
+            const { filename, teams, score } = await readRequestBody(req);
+            if (!filename) {
+              res.statusCode = 400;
+              return res.end(JSON.stringify({ message: 'Missing filename' }));
             }
             const teamsFilePath = path.resolve(__dirname, 'data', filename);
-            fs.writeFileSync(teamsFilePath, JSON.stringify(teams, null, 2), 'utf-8');
-            res.statusCode = 200;
-            res.end(JSON.stringify({ message: 'Teams saved successfully' }));
+
+            if (teams) {
+              // Saving full team data
+              fs.writeFileSync(teamsFilePath, JSON.stringify(teams, null, 2), 'utf-8');
+              res.statusCode = 200;
+              res.end(JSON.stringify({ message: 'Teams saved successfully' }));
+            } else if (score) {
+              // Updating score for an existing game
+              if (!fs.existsSync(teamsFilePath)) {
+                res.statusCode = 404;
+                return res.end(JSON.stringify({ message: 'Game file not found to update score.' }));
+              }
+              const gameData = JSON.parse(fs.readFileSync(teamsFilePath, 'utf-8'));
+              gameData.scoreLight = typeof score.light === 'number' ? score.light : gameData.scoreLight;
+              gameData.scoreDark = typeof score.dark === 'number' ? score.dark : gameData.scoreDark;
+              fs.writeFileSync(teamsFilePath, JSON.stringify(gameData, null, 2), 'utf-8');
+              res.statusCode = 200;
+              res.end(JSON.stringify({ message: 'Score saved successfully' }));
+            } else {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ message: 'Request body must contain either "teams" or "score" object.' }));
+            }
           } catch (error) {
             console.error('[Teams API] Error processing request (POST):', error);
             res.statusCode = error.message === 'Invalid JSON' ? 400 : 500;
-            res.end(JSON.stringify({ message: error.message || 'Error saving teams data' }));
+            res.end(JSON.stringify({ message: error.message || 'Error processing request' }));
           }
         } else {
           res.statusCode = 405;
@@ -276,7 +310,7 @@ function apiPlugin() {
         const pathname = parsedUrl.pathname;
 
         // Valid client-side routes from your router configuration
-        const validAppRoutes = ['/', '/login', '/leader', '/pick'];
+        const validAppRoutes = ['/', '/login', '/leader', '/pick', '/previous-games'];
 
         // Paths to let Vite handle (API, static assets, internal)
         const isApiCall = pathname.startsWith('/api/');

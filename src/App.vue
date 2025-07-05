@@ -151,7 +151,8 @@ const saveTeams = async () => {
     avgSkaterRatioLight: avgSkaterRatioLight.value,
     avgSkaterRatioDark: avgSkaterRatioDark.value,
     votesLight: votesLight.value,
-    votesDark: votesDark.value
+    votesDark: votesDark.value,
+    compositionId: compositionId.value
   };
 
   try {
@@ -182,6 +183,7 @@ const loadTeamsForCurrentWeek = async () => {
       avgSkaterRatioDark.value = teamsData.avgSkaterRatioDark || teamsData.avgSkaterRatioB || 0;
       votesLight.value = teamsData.votesLight || 0;
       votesDark.value = teamsData.votesDark || 0;
+      compositionId.value = teamsData.compositionId || null;
       showTeams.value = true;
       console.log(`Successfully loaded teams from ${filename}`);
     } else if (response.status === 404) {
@@ -228,8 +230,12 @@ const toggleTeamsLock = () => {
 };
 
 const castVoteForTeam = async (team) => {
+  if (!compositionId.value) {
+    alert("Cannot vote until teams are finalized with an ID.");
+    return;
+  }
   const weekNumber = getWeekNumber(new Date());
-  const voteKey = `voted_week_${weekNumber}`;
+  const voteKey = `voted_week_${weekNumber}_${compositionId.value}`;
 
   if (localStorage.getItem(voteKey)) {
     alert("You have already voted for this week.");
@@ -279,6 +285,7 @@ const avgSkaterRatioLight = ref(0); // Ref to store Light's avg skater ratio
 const avgSkaterRatioDark = ref(0); // Ref to store Dark's avg skater ratio
 const votesLight = ref(0);
 const votesDark = ref(0);
+const compositionId = ref(null);
 
 // Helper function to shuffle an array (Fisher-Yates algorithm)
 const shuffleArray = (array) => {
@@ -563,6 +570,7 @@ const generateTeams = () => {
   // Reset votes for new teams
   votesLight.value = 0;
   votesDark.value = 0;
+  compositionId.value = Date.now(); // Generate new ID to allow re-voting
 
   // Update the displayed average skater ratios based on the final teams
   updateAvgSkaterRatios();
@@ -613,6 +621,11 @@ const onDrop = (event, targetTeam) => {
 
   // Update the average skater ratios after the drop
   updateAvgSkaterRatios();
+
+  // Reset votes and create new composition ID since teams were modified
+  votesLight.value = 0;
+  votesDark.value = 0;
+  compositionId.value = Date.now();
 
   draggedPlayer.value = null; sourceTeam.value = null;
   saveTeams();
@@ -666,6 +679,7 @@ provide('avgSkaterRatioLight', avgSkaterRatioLight); // Provide Light ratio
 provide('avgSkaterRatioDark', avgSkaterRatioDark); // Provide Dark ratio
 provide('votesLight', votesLight);
 provide('votesDark', votesDark);
+provide('compositionId', compositionId);
 
 </script>
 

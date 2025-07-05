@@ -216,6 +216,7 @@ const setMessage = inject('setMessage');
 const isTeamsLocked = inject('isTeamsLocked');
 const toggleTeamsLock = inject('toggleTeamsLock');
 const castVoteForTeam = inject('castVoteForTeam');
+const compositionId = inject('compositionId');
 
 const adminMessage = ref('');
 
@@ -283,7 +284,10 @@ const getWeekNumber = (d) => {
   return weekNo;
 };
 const currentWeekNumber = computed(() => getWeekNumber(new Date()));
-const userVote = computed(() => localStorage.getItem(`voted_week_${currentWeekNumber.value}`));
+const userVote = computed(() => {
+  if (!compositionId.value) return null; // Can't have voted if there's no composition ID
+  return localStorage.getItem(`voted_week_${currentWeekNumber.value}_${compositionId.value}`);
+});
 
 
 // Use a ref and a watch for sorting to avoid mutation side-effects in computed properties

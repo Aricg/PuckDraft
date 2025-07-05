@@ -262,7 +262,7 @@ function apiPlugin() {
           }
         } else if (req.method === 'POST') {
           try {
-            const { filename, teams, score } = await readRequestBody(req);
+            const { filename, teams, score, vote } = await readRequestBody(req);
             if (!filename) {
               res.statusCode = 400;
               return res.end(JSON.stringify({ message: 'Missing filename' }));
@@ -286,9 +286,21 @@ function apiPlugin() {
               fs.writeFileSync(teamsFilePath, JSON.stringify(gameData, null, 2), 'utf-8');
               res.statusCode = 200;
               res.end(JSON.stringify({ message: 'Score saved successfully' }));
+            } else if (vote) {
+              // Saving a vote for a team
+              if (!fs.existsSync(teamsFilePath)) {
+                res.statusCode = 404;
+                return res.end(JSON.stringify({ message: 'Game file not found to vote on.' }));
+              }
+              const gameData = JSON.parse(fs.readFileSync(teamsFilePath, 'utf-8'));
+              if (vote === 'Light') gameData.votesLight = (gameData.votesLight || 0) + 1;
+              else if (vote === 'Dark') gameData.votesDark = (gameData.votesDark || 0) + 1;
+              fs.writeFileSync(teamsFilePath, JSON.stringify(gameData, null, 2), 'utf-8');
+              res.statusCode = 200;
+              res.end(JSON.stringify({ message: 'Vote saved successfully', votesLight: gameData.votesLight, votesDark: gameData.votesDark }));
             } else {
               res.statusCode = 400;
-              res.end(JSON.stringify({ message: 'Request body must contain either "teams" or "score" object.' }));
+              res.end(JSON.stringify({ message: 'Request body must contain "teams", "score", or "vote" object.' }));
             }
           } catch (error) {
             console.error('[Teams API] Error processing request (POST):', error);

@@ -149,7 +149,9 @@ const saveTeams = async () => {
     teamLight: teamLight.value,
     teamDark: teamDark.value,
     avgSkaterRatioLight: avgSkaterRatioLight.value,
-    avgSkaterRatioDark: avgSkaterRatioDark.value
+    avgSkaterRatioDark: avgSkaterRatioDark.value,
+    votesLight: votesLight.value,
+    votesDark: votesDark.value
   };
 
   try {
@@ -178,6 +180,8 @@ const loadTeamsForCurrentWeek = async () => {
       teamDark.value = teamsData.teamDark || teamsData.teamB || [];
       avgSkaterRatioLight.value = teamsData.avgSkaterRatioLight || teamsData.avgSkaterRatioA || 0;
       avgSkaterRatioDark.value = teamsData.avgSkaterRatioDark || teamsData.avgSkaterRatioB || 0;
+      votesLight.value = teamsData.votesLight || 0;
+      votesDark.value = teamsData.votesDark || 0;
       showTeams.value = true;
       console.log(`Successfully loaded teams from ${filename}`);
     } else if (response.status === 404) {
@@ -223,6 +227,39 @@ const toggleTeamsLock = () => {
   saveGameStatus();
 };
 
+const castVoteForTeam = async (team) => {
+  const weekNumber = getWeekNumber(new Date());
+  const voteKey = `voted_week_${weekNumber}`;
+
+  if (localStorage.getItem(voteKey)) {
+    alert("You have already voted for this week.");
+    return;
+  }
+
+  const filename = `${weekNumber}.teams.json`;
+
+  try {
+    const response = await fetch('/api/teams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, vote: team }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    votesLight.value = result.votesLight;
+    votesDark.value = result.votesDark;
+
+    localStorage.setItem(voteKey, team); // Record the vote in localStorage
+  } catch (error) {
+    console.error("Failed to cast vote:", error);
+    alert('Failed to cast vote. See console for details.');
+  }
+};
+
 // --- Core State ---
 const players = ref([]); // Master list of players
 const isPlayersLoaded = ref(false); // Flag to prevent saving before initial load
@@ -240,6 +277,8 @@ const draggedPlayer = ref(null);
 const sourceTeam = ref(null);
 const avgSkaterRatioLight = ref(0); // Ref to store Light's avg skater ratio
 const avgSkaterRatioDark = ref(0); // Ref to store Dark's avg skater ratio
+const votesLight = ref(0);
+const votesDark = ref(0);
 
 // Helper function to shuffle an array (Fisher-Yates algorithm)
 const shuffleArray = (array) => {
@@ -521,6 +560,10 @@ const generateTeams = () => {
   teamLight.value = sortAndShuffleTeam(draftTeamLight);
   teamDark.value = sortAndShuffleTeam(draftTeamDark);
 
+  // Reset votes for new teams
+  votesLight.value = 0;
+  votesDark.value = 0;
+
   // Update the displayed average skater ratios based on the final teams
   updateAvgSkaterRatios();
 
@@ -601,6 +644,7 @@ provide('message', computed(() => gameStatus.value.message));
 provide('setMessage', setMessage);
 provide('isTeamsLocked', computed(() => gameStatus.value.teamsLocked));
 provide('toggleTeamsLock', toggleTeamsLock);
+provide('castVoteForTeam', castVoteForTeam);
 
 // Provide computed properties
 provide('activeForwardCount', activeForwardCount);
@@ -620,6 +664,8 @@ provide('showTeams', showTeams);
 provide('draftType', draftType);
 provide('avgSkaterRatioLight', avgSkaterRatioLight); // Provide Light ratio
 provide('avgSkaterRatioDark', avgSkaterRatioDark); // Provide Dark ratio
+provide('votesLight', votesLight);
+provide('votesDark', votesDark);
 
 </script>
 

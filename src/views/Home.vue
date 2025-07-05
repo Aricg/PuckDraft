@@ -204,6 +204,7 @@ const message = inject('message');
 const setMessage = inject('setMessage');
 const isTeamsLocked = inject('isTeamsLocked');
 const toggleTeamsLock = inject('toggleTeamsLock');
+const castVoteForTeam = inject('castVoteForTeam');
 
 const adminMessage = ref('');
 
@@ -263,6 +264,16 @@ onUnmounted(() => {
   }
 });
 
+const getWeekNumber = (d) => {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return weekNo;
+};
+const currentWeekNumber = computed(() => getWeekNumber(new Date()));
+const userVote = computed(() => localStorage.getItem(`voted_week_${currentWeekNumber.value}`));
+
 
 // Use a ref and a watch for sorting to avoid mutation side-effects in computed properties
 const sortedRosterPlayers = ref([]);
@@ -297,6 +308,8 @@ const showTeams = inject('showTeams');
 const draftType = inject('draftType');
 const avgSkaterRatioLight = inject('avgSkaterRatioLight'); // Inject Light ratio
 const avgSkaterRatioDark = inject('avgSkaterRatioDark'); // Inject Dark ratio
+const votesLight = inject('votesLight');
+const votesDark = inject('votesDark');
 
 </script>
 
@@ -683,5 +696,41 @@ button {
   color: var(--delete-button-bg-color);
   font-weight: bold;
   margin-left: 10px;
+}
+
+/* Team Voting Styles */
+.team-voting {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+.vote-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+}
+.vote-buttons button {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+}
+.vote-buttons button:hover:not(:disabled) {
+  background-color: var(--button-hover-bg-color);
+}
+.vote-buttons button:disabled {
+  background-color: var(--inactive-text-color);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.vote-buttons button.voted-for {
+  background-color: var(--vote-button-bg-color);
+  border: 2px solid var(--text-color);
+  box-shadow: 0 0 5px var(--vote-button-bg-color);
+}
+.vote-thanks {
+  margin-top: 10px;
+  font-style: italic;
+  color: var(--vote-button-bg-color);
 }
 </style>

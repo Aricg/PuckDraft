@@ -184,7 +184,18 @@
                 </ul>
             </div>
         </div>
-         <!-- TODO: Add option to save results -->
+        <div class="team-voting">
+          <h4>Which team is stronger?</h4>
+          <div class="vote-buttons">
+            <button @click="castVoteForTeam('Light')" :disabled="userVote" :class="{ 'voted-for': userVote === 'Light' }">
+              Vote Light ({{ votesLight || 0 }})
+            </button>
+            <button @click="castVoteForTeam('Dark')" :disabled="userVote" :class="{ 'voted-for': userVote === 'Dark' }">
+              Vote Dark ({{ votesDark || 0 }})
+            </button>
+          </div>
+          <p v-if="userVote" class="vote-thanks">Thanks for voting!</p>
+        </div>
     </section>
   </div>
 </template>

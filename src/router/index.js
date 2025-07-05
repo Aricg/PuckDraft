@@ -36,7 +36,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     // If route requires auth and user is not authenticated, redirect to login

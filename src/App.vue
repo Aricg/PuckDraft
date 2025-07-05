@@ -28,8 +28,8 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 // --- Auth State ---
-const isAuthenticated = ref(sessionStorage.getItem('isAuthenticated') === 'true');
-const userRole = ref(sessionStorage.getItem('userRole') || null);
+const isAuthenticated = ref(localStorage.getItem('isAuthenticated') === 'true');
+const userRole = ref(localStorage.getItem('userRole') || null);
 
 // --- Game Status State ---
 const gameStatus = ref({ cancelledFor: null, bbqOn: false, message: '', teamsLocked: false }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true, message: 'Hi' }
@@ -68,8 +68,8 @@ const login = (password, role) => {
   if (isAdminLogin || isPlayerLogin) {
     isAuthenticated.value = true;
     userRole.value = role;
-    sessionStorage.setItem('isAuthenticated', 'true');
-    sessionStorage.setItem('userRole', role);
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userRole', role);
     loadPlayers(); // Load players on successful login
     loadGameStatus(); // Load game status on successful login
     loadTeamsForCurrentWeek(); // Check for existing teams file
@@ -82,8 +82,8 @@ const login = (password, role) => {
 const logout = () => {
   isAuthenticated.value = false;
   userRole.value = null;
-  sessionStorage.removeItem('isAuthenticated');
-  sessionStorage.removeItem('userRole');
+  localStorage.removeItem('isAuthenticated');
+  localStorage.removeItem('userRole');
   router.push({ name: 'Login' });
 };
 
@@ -376,7 +376,7 @@ const savePlayers = async () => {
 
 onMounted(() => {
   // On page load/refresh, check if user was already logged in
-  isAuthenticated.value = sessionStorage.getItem('isAuthenticated') === 'true';
+  isAuthenticated.value = localStorage.getItem('isAuthenticated') === 'true';
   if (isAuthenticated.value) {
     loadPlayers();
     loadGameStatus();

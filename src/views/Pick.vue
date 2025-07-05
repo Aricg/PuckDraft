@@ -18,6 +18,9 @@
           <button @click="vote(playerB.id)">Vote</button>
         </div>
       </div>
+      <div class="skip-section">
+        <button @click="skipVote" class="skip-btn">Skip</button>
+      </div>
     </section>
     <section v-else-if="activePlayers.length >= 2">
         <p>Loading next pair...</p>
@@ -35,6 +38,7 @@ import { inject } from 'vue';
 
 // Inject data and methods needed for voting
 const vote = inject('vote');
+const skipVote = inject('skipVote');
 const activePlayers = inject('activePlayers');
 const playerA = inject('playerA');
 const playerB = inject('playerB');
@@ -94,6 +98,22 @@ const playerB = inject('playerB');
 .vs {
   font-weight: bold;
   font-size: 1.5em;
+}
+
+.skip-section {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.skip-btn {
+  background-color: var(--inactive-text-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 8px 15px;
+}
+
+.skip-btn:hover {
+  background-color: var(--text-color);
 }
 
 .nav-link {

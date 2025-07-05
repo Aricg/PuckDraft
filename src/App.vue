@@ -658,6 +658,7 @@ provide('setMessage', setMessage);
 provide('isTeamsLocked', computed(() => gameStatus.value.teamsLocked));
 provide('toggleTeamsLock', toggleTeamsLock);
 provide('castVoteForTeam', castVoteForTeam);
+provide('skipVote', getRandomPair);
 
 // Provide computed properties
 provide('activeForwardCount', activeForwardCount);

@@ -100,6 +100,10 @@
           (FULL)
         </span>
       </h2>
+      <div class="roster-controls" v-if="userRole === 'admin'">
+        <button @click="toggleAllPlayers(true)" class="all-in-btn">All In</button>
+        <button @click="toggleAllPlayers(false)" class="all-out-btn">All Out</button>
+      </div>
       <ul v-if="sortedRosterPlayers.length > 0">
         <li v-for="player in sortedRosterPlayers" :key="player.id" :class="{ inactive: !player.active }">
           <span>
@@ -233,6 +237,10 @@ const handleClearMessage = () => {
   adminMessage.value = '';
   setMessage('');
   alert('Message cleared!');
+};
+
+const toggleAllPlayers = (status) => {
+  players.value.forEach(p => p.active = status);
 };
 
 // For admin game management display
@@ -747,5 +755,26 @@ button {
   margin-top: 10px;
   font-style: italic;
   color: var(--vote-button-bg-color);
+}
+
+.roster-controls {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.roster-controls .all-in-btn {
+  background-color: var(--vote-button-bg-color);
+  color: var(--button-text-color);
+}
+.roster-controls .all-in-btn:hover {
+  background-color: var(--vote-button-hover-bg-color);
+}
+.roster-controls .all-out-btn {
+  background-color: var(--delete-button-bg-color);
+  color: var(--button-text-color);
+}
+.roster-controls .all-out-btn:hover {
+  background-color: var(--delete-button-hover-bg-color);
 }
 </style>

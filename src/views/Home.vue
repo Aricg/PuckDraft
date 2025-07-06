@@ -206,12 +206,6 @@
                 ({{ swapPreview.light >= 0 ? '+' : '' }}{{ swapPreview.light }}%)
               </span>
             </p>
-            <p>
-              Dark: {{ (avgSkaterRatioDark * 100).toFixed(1) }}% <span class="arrow">→</span> {{ ((avgSkaterRatioDark * 100) + parseFloat(swapPreview.dark)).toFixed(1) }}%
-              <span :class="swapPreview.dark >= 0 ? 'strength-up' : 'strength-down'">
-                ({{ swapPreview.dark >= 0 ? '+' : '' }}{{ swapPreview.dark }}%)
-              </span>
-            </p>
           </div>
           <button @click="executeSwap" class="swap-btn">Swap Selected Players</button>
         </div>
@@ -386,19 +380,15 @@ const swapPreview = computed(() => {
     return totalRatio / skaters.length;
   };
 
-  // Create temporary teams to simulate the swap
+  // Create temporary team to simulate the swap for Light team
   const tempTeamLight = [...teamLight.value.filter(p => p.id !== player1.id), player2];
-  const tempTeamDark = [...teamDark.value.filter(p => p.id !== player2.id), player1];
 
   const newStrengthLight = calculateTeamStrength(tempTeamLight);
-  const newStrengthDark = calculateTeamStrength(tempTeamDark);
 
   const lightDiff = newStrengthLight - avgSkaterRatioLight.value;
-  const darkDiff = newStrengthDark - avgSkaterRatioDark.value;
 
   return {
     light: (lightDiff * 100).toFixed(1),
-    dark: (darkDiff * 100).toFixed(1),
   };
 });
 

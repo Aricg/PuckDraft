@@ -286,6 +286,7 @@ const avgSkaterRatioDark = ref(0); // Ref to store Dark's avg skater ratio
 const votesLight = ref(0);
 const votesDark = ref(0);
 const compositionId = ref(null);
+const selectedPlayerForSwap = ref(null);
 
 // Helper function to shuffle an array (Fisher-Yates algorithm)
 const shuffleArray = (array) => {
@@ -633,6 +634,56 @@ const onDrop = (event, targetTeam) => {
   saveTeams();
 };
 
+const handlePlayerSwapClick = (playerToSelect, teamName) => {
+  if (!selectedPlayerForSwap.value) {
+    // 1. No player is selected, so select this one.
+    selectedPlayerForSwap.value = { player: playerToSelect, team: teamName };
+    return;
+  }
+
+  const previouslySelected = selectedPlayerForSwap.value;
+
+  if (previouslySelected.player.id === playerToSelect.id) {
+    // 2. Clicked the same player, so deselect.
+    selectedPlayerForSwap.value = null;
+    return;
+  }
+
+  if (previouslySelected.team === teamName) {
+    // 3. Clicked a different player on the same team, so move the selection.
+    selectedPlayerForSwap.value = { player: playerToSelect, team: teamName };
+    return;
+  }
+
+  // 4. Clicked a player on the opposite team. Perform the swap.
+  const player1 = previouslySelected.player;
+  const team1Name = previouslySelected.team;
+  const team1 = team1Name === 'Light' ? teamLight : teamDark;
+
+  const player2 = playerToSelect;
+  const team2 = teamName === 'Light' ? teamLight : teamDark;
+
+  // Remove from original teams
+  team1.value = team1.value.filter(p => p.id !== player1.id);
+  team2.value = team2.value.filter(p => p.id !== player2.id);
+
+  // Add to new teams
+  team1.value.push(player2);
+  team2.value.push(player1);
+
+  // Reset selection
+  selectedPlayerForSwap.value = null;
+
+  // Re-sort, update ratios, reset votes, and save
+  teamLight.value = sortAndShuffleTeam(teamLight.value);
+  teamDark.value = sortAndShuffleTeam(teamDark.value);
+  updateAvgSkaterRatios();
+  votesLight.value = 0;
+  votesDark.value = 0;
+  compositionId.value = Date.now();
+  saveTeams();
+};
+
 
 // --- Provide data and methods to child components ---
 provide('login', login);
@@ -649,6 +700,7 @@ provide('onDragOver', onDragOver);
 provide('onDragEnter', onDragEnter);
 provide('onDragLeave', onDragLeave);
 provide('onDrop', onDrop);
+provide('handlePlayerSwapClick', handlePlayerSwapClick);
 provide('calculateWinRatio', calculateWinRatio);
 provide('nextGameDate', nextGameDate);
 provide('isGameCancelled', isGameCancelled);
@@ -683,6 +735,7 @@ provide('avgSkaterRatioDark', avgSkaterRatioDark); // Provide Dark ratio
 provide('votesLight', votesLight);
 provide('votesDark', votesDark);
 provide('compositionId', compositionId);
+provide('selectedPlayerForSwap', selectedPlayerForSwap);
 
 </script>
 

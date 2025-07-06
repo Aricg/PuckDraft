@@ -167,6 +167,8 @@
                       draggable="true"
                       @dragstart="onDragStart($event, player, 'Light')"
                       @dragend="onDragEnd"
+                      @click="handlePlayerSwapClick(player, 'Light')"
+                      :class="{ 'selected-for-swap': selectedPlayerForSwap && selectedPlayerForSwap.player.id === player.id }"
                     >
                         {{ player.name }} ({{ player.position }})
                     </li>
@@ -188,6 +190,8 @@
                        draggable="true"
                        @dragstart="onDragStart($event, player, 'Dark')"
                        @dragend="onDragEnd"
+                       @click="handlePlayerSwapClick(player, 'Dark')"
+                       :class="{ 'selected-for-swap': selectedPlayerForSwap && selectedPlayerForSwap.player.id === player.id }"
                      >
                         {{ player.name }} ({{ player.position }})
                     </li>
@@ -227,6 +231,8 @@ const isTeamsLocked = inject('isTeamsLocked');
 const toggleTeamsLock = inject('toggleTeamsLock');
 const castVoteForTeam = inject('castVoteForTeam');
 const compositionId = inject('compositionId');
+const handlePlayerSwapClick = inject('handlePlayerSwapClick');
+const selectedPlayerForSwap = inject('selectedPlayerForSwap');
 
 const adminMessage = ref('');
 
@@ -792,5 +798,11 @@ button {
 }
 .roster-controls .all-out-btn:hover {
   background-color: var(--delete-button-hover-bg-color);
+}
+
+.team-list li.selected-for-swap {
+  background-color: var(--vote-button-bg-color);
+  color: var(--button-text-color);
+  font-weight: bold;
 }
 </style>

@@ -199,6 +199,20 @@
             </div>
         </div>
         <div class="swap-controls" v-if="selectedForSwapLight && selectedForSwapDark">
+          <div class="swap-preview" v-if="swapPreview">
+            <p>
+              Light: {{ (avgSkaterRatioLight * 100).toFixed(1) }}% <span class="arrow">→</span> {{ ((avgSkaterRatioLight * 100) + parseFloat(swapPreview.light)).toFixed(1) }}%
+              <span :class="swapPreview.light >= 0 ? 'strength-up' : 'strength-down'">
+                ({{ swapPreview.light >= 0 ? '+' : '' }}{{ swapPreview.light }}%)
+              </span>
+            </p>
+            <p>
+              Dark: {{ (avgSkaterRatioDark * 100).toFixed(1) }}% <span class="arrow">→</span> {{ ((avgSkaterRatioDark * 100) + parseFloat(swapPreview.dark)).toFixed(1) }}%
+              <span :class="swapPreview.dark >= 0 ? 'strength-up' : 'strength-down'">
+                ({{ swapPreview.dark >= 0 ? '+' : '' }}{{ swapPreview.dark }}%)
+              </span>
+            </p>
+          </div>
           <button @click="executeSwap" class="swap-btn">Swap Selected Players</button>
         </div>
         <div class="team-voting">
@@ -335,6 +349,7 @@ const onDragOver = inject('onDragOver');
 const onDragEnter = inject('onDragEnter');
 const onDragLeave = inject('onDragLeave');
 const onDrop = inject('onDrop');
+const calculateWinRatio = inject('calculateWinRatio');
 
 // Inject computed properties
 const activeForwardCount = inject('activeForwardCount');
@@ -354,6 +369,38 @@ const avgSkaterRatioLight = inject('avgSkaterRatioLight'); // Inject Light ratio
 const avgSkaterRatioDark = inject('avgSkaterRatioDark'); // Inject Dark ratio
 const votesLight = inject('votesLight');
 const votesDark = inject('votesDark');
+
+const swapPreview = computed(() => {
+  if (!selectedForSwapLight.value || !selectedForSwapDark.value) {
+    return null;
+  }
+
+  const player1 = selectedForSwapLight.value;
+  const player2 = selectedForSwapDark.value;
+
+  // Helper to calculate avg strength for a team of players
+  const calculateTeamStrength = (team) => {
+    const skaters = team.filter(p => p.position !== 'G');
+    if (skaters.length === 0) return 0;
+    const totalRatio = skaters.reduce((sum, p) => sum + calculateWinRatio(p), 0);
+    return totalRatio / skaters.length;
+  };
+
+  // Create temporary teams to simulate the swap
+  const tempTeamLight = [...teamLight.value.filter(p => p.id !== player1.id), player2];
+  const tempTeamDark = [...teamDark.value.filter(p => p.id !== player2.id), player1];
+
+  const newStrengthLight = calculateTeamStrength(tempTeamLight);
+  const newStrengthDark = calculateTeamStrength(tempTeamDark);
+
+  const lightDiff = newStrengthLight - avgSkaterRatioLight.value;
+  const darkDiff = newStrengthDark - avgSkaterRatioDark.value;
+
+  return {
+    light: (lightDiff * 100).toFixed(1),
+    dark: (darkDiff * 100).toFixed(1),
+  };
+});
 
 </script>
 
@@ -824,5 +871,32 @@ button {
 
 .swap-btn:hover {
   background-color: var(--button-hover-bg-color);
+}
+
+.swap-preview {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.swap-preview p {
+  margin: 5px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.swap-preview .arrow {
+  font-size: 1.2em;
+}
+.strength-up {
+  color: var(--vote-button-bg-color);
+  font-weight: bold;
+}
+.strength-down {
+  color: var(--delete-button-bg-color);
+  font-weight: bold;
 }
 </style>

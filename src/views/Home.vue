@@ -116,11 +116,17 @@
               <option value="D">D</option>
             </select>
           </span>
-          <label>
-            <input type="checkbox" v-model="player.active">
-            In
-          </label>
-          <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
+          <span class="roster-player-controls">
+            <label v-if="userRole === 'admin'">
+              <input type="checkbox" v-model="player.isFullTime">
+              Full Time
+            </label>
+            <label>
+              <input type="checkbox" v-model="player.active">
+              In
+            </label>
+            <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
+          </span>
         </li>
       </ul>
       <p v-else>No players added yet.</p>
@@ -240,7 +246,11 @@ const handleClearMessage = () => {
 };
 
 const toggleAllPlayers = (status) => {
-  players.value.forEach(p => p.active = status);
+  players.value.forEach(p => {
+    if (!p.isFullTime) {
+      p.active = status;
+    }
+  });
 };
 
 // For admin game management display
@@ -419,6 +429,12 @@ const votesDark = inject('votesDark');
   align-items: center;
   padding: 8px;
   border-bottom: 1px solid var(--section-border-color);
+}
+
+.roster-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Space between controls */
 }
 
 .roster li.inactive span {

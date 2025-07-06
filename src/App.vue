@@ -362,6 +362,7 @@ const addPlayer = () => {
     name: newPlayerName.value.trim(),
     position: newPlayerPosition.value,
     active: true,
+    isFullTime: false,
     wins: 0,
     losses: 0,
     comparisonCount: 0,
@@ -391,6 +392,7 @@ const loadPlayers = async () => {
         return {
             ...player,
             active: player.active !== undefined ? player.active : true,
+            isFullTime: player.isFullTime === true, // Default to false if not explicitly true
             wins: wins,
             losses: losses,
             comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : (wins + losses),

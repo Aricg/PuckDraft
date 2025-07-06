@@ -168,7 +168,7 @@
                       @dragstart="onDragStart($event, player, 'Light')"
                       @dragend="onDragEnd"
                       @click="handlePlayerSwapClick(player, 'Light')"
-                      :class="{ 'selected-for-swap': selectedPlayerForSwap && selectedPlayerForSwap.player.id === player.id }"
+                      :class="{ 'selected-for-swap': selectedForSwapLight && selectedForSwapLight.id === player.id }"
                     >
                         {{ player.name }} ({{ player.position }})
                     </li>
@@ -191,12 +191,15 @@
                        @dragstart="onDragStart($event, player, 'Dark')"
                        @dragend="onDragEnd"
                        @click="handlePlayerSwapClick(player, 'Dark')"
-                       :class="{ 'selected-for-swap': selectedPlayerForSwap && selectedPlayerForSwap.player.id === player.id }"
+                       :class="{ 'selected-for-swap': selectedForSwapDark && selectedForSwapDark.id === player.id }"
                      >
                         {{ player.name }} ({{ player.position }})
                     </li>
                 </ul>
             </div>
+        </div>
+        <div class="swap-controls" v-if="selectedForSwapLight && selectedForSwapDark">
+          <button @click="executeSwap" class="swap-btn">Swap Selected Players</button>
         </div>
         <div class="team-voting">
           <h4>Which team is stronger?</h4>
@@ -232,7 +235,9 @@ const toggleTeamsLock = inject('toggleTeamsLock');
 const castVoteForTeam = inject('castVoteForTeam');
 const compositionId = inject('compositionId');
 const handlePlayerSwapClick = inject('handlePlayerSwapClick');
-const selectedPlayerForSwap = inject('selectedPlayerForSwap');
+const executeSwap = inject('executeSwap');
+const selectedForSwapLight = inject('selectedForSwapLight');
+const selectedForSwapDark = inject('selectedForSwapDark');
 
 const adminMessage = ref('');
 
@@ -804,5 +809,20 @@ button {
   background-color: var(--vote-button-bg-color);
   color: var(--button-text-color);
   font-weight: bold;
+}
+
+.swap-controls {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.swap-btn {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+  padding: 10px 20px;
+}
+
+.swap-btn:hover {
+  background-color: var(--button-hover-bg-color);
 }
 </style>

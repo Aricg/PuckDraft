@@ -286,7 +286,8 @@ const avgSkaterRatioDark = ref(0); // Ref to store Dark's avg skater ratio
 const votesLight = ref(0);
 const votesDark = ref(0);
 const compositionId = ref(null);
-const selectedPlayerForSwap = ref(null);
+const selectedForSwapLight = ref(null);
+const selectedForSwapDark = ref(null);
 
 // Helper function to shuffle an array (Fisher-Yates algorithm)
 const shuffleArray = (array) => {
@@ -635,44 +636,41 @@ const onDrop = (event, targetTeam) => {
 };
 
 const handlePlayerSwapClick = (playerToSelect, teamName) => {
-  if (!selectedPlayerForSwap.value) {
-    // 1. No player is selected, so select this one.
-    selectedPlayerForSwap.value = { player: playerToSelect, team: teamName };
+  if (teamName === 'Light') {
+    if (selectedForSwapLight.value && selectedForSwapLight.value.id === playerToSelect.id) {
+      selectedForSwapLight.value = null; // Deselect if clicking the same player
+    } else {
+      selectedForSwapLight.value = playerToSelect; // Select new player
+    }
+  } else if (teamName === 'Dark') {
+    if (selectedForSwapDark.value && selectedForSwapDark.value.id === playerToSelect.id) {
+      selectedForSwapDark.value = null; // Deselect
+    } else {
+      selectedForSwapDark.value = playerToSelect; // Select
+    }
+  }
+};
+
+const executeSwap = () => {
+  if (!selectedForSwapLight.value || !selectedForSwapDark.value) {
+    alert("Please select one player from each team to swap.");
     return;
   }
 
-  const previouslySelected = selectedPlayerForSwap.value;
-
-  if (previouslySelected.player.id === playerToSelect.id) {
-    // 2. Clicked the same player, so deselect.
-    selectedPlayerForSwap.value = null;
-    return;
-  }
-
-  if (previouslySelected.team === teamName) {
-    // 3. Clicked a different player on the same team, so move the selection.
-    selectedPlayerForSwap.value = { player: playerToSelect, team: teamName };
-    return;
-  }
-
-  // 4. Clicked a player on the opposite team. Perform the swap.
-  const player1 = previouslySelected.player;
-  const team1Name = previouslySelected.team;
-  const team1 = team1Name === 'Light' ? teamLight : teamDark;
-
-  const player2 = playerToSelect;
-  const team2 = teamName === 'Light' ? teamLight : teamDark;
+  const player1 = selectedForSwapLight.value;
+  const player2 = selectedForSwapDark.value;
 
   // Remove from original teams
-  team1.value = team1.value.filter(p => p.id !== player1.id);
-  team2.value = team2.value.filter(p => p.id !== player2.id);
+  teamLight.value = teamLight.value.filter(p => p.id !== player1.id);
+  teamDark.value = teamDark.value.filter(p => p.id !== player2.id);
 
   // Add to new teams
-  team1.value.push(player2);
-  team2.value.push(player1);
+  teamLight.value.push(player2);
+  teamDark.value.push(player1);
 
   // Reset selection
-  selectedPlayerForSwap.value = null;
+  selectedForSwapLight.value = null;
+  selectedForSwapDark.value = null;
 
   // Re-sort, update ratios, reset votes, and save
   teamLight.value = sortAndShuffleTeam(teamLight.value);
@@ -701,6 +699,7 @@ provide('onDragEnter', onDragEnter);
 provide('onDragLeave', onDragLeave);
 provide('onDrop', onDrop);
 provide('handlePlayerSwapClick', handlePlayerSwapClick);
+provide('executeSwap', executeSwap);
 provide('calculateWinRatio', calculateWinRatio);
 provide('nextGameDate', nextGameDate);
 provide('isGameCancelled', isGameCancelled);
@@ -735,7 +734,8 @@ provide('avgSkaterRatioDark', avgSkaterRatioDark); // Provide Dark ratio
 provide('votesLight', votesLight);
 provide('votesDark', votesDark);
 provide('compositionId', compositionId);
-provide('selectedPlayerForSwap', selectedPlayerForSwap);
+provide('selectedForSwapLight', selectedForSwapLight);
+provide('selectedForSwapDark', selectedForSwapDark);
 
 </script>
 

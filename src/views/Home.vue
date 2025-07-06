@@ -199,7 +199,7 @@
             </div>
         </div>
         <div class="swap-controls" v-if="selectedForSwapLight && selectedForSwapDark">
-          <div class="swap-preview" v-if="swapPreview">
+          <div class="swap-preview" v-if="swapPreview && userRole === 'admin'">
             <p>
               Light
               <span :class="swapPreview.light >= 0 ? 'strength-up' : 'strength-down'">

@@ -201,7 +201,7 @@
         <div class="swap-controls" v-if="selectedForSwapLight && selectedForSwapDark">
           <div class="swap-preview" v-if="swapPreview">
             <p>
-              Light: {{ (avgSkaterRatioLight * 100).toFixed(1) }}% <span class="arrow">→</span> {{ ((avgSkaterRatioLight * 100) + parseFloat(swapPreview.light)).toFixed(1) }}%
+              Light
               <span :class="swapPreview.light >= 0 ? 'strength-up' : 'strength-down'">
                 ({{ swapPreview.light >= 0 ? '+' : '' }}{{ swapPreview.light }}%)
               </span>

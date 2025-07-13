@@ -104,14 +104,19 @@
         <button @click="toggleAllPlayers(true)" class="all-in-btn">All In</button>
         <button @click="toggleAllPlayers(false)" class="all-out-btn">All Out</button>
       </div>
-      <ul v-if="sortedRosterPlayers.length > 0">
-        <li v-for="player in sortedRosterPlayers" :key="player.id" :class="{ inactive: !player.active }">
+      <div class="roster-controls" v-if="userRole === 'player'">
+        <label>
+          <input type="checkbox" v-model="showInactivePlayers"> Show players who are out
+        </label>
+      </div>
+      <ul v-if="displayRoster.length > 0">
+        <li v-for="player in displayRoster" :key="player.id" :class="{ inactive: !player.active }">
           <span>
             {{ player.name }}
             <!-- Static display for Goalies -->
             <span v-if="player.position === 'G'"> (G)</span>
             <!-- Dropdown for F/D -->
-            <select v-else v-model="player.position" class="position-select">
+            <select v-else v-model="player.position" class="position-select" :disabled="userRole !== 'admin'">
               <option value="F">F</option>
               <option value="D">D</option>
             </select>
@@ -122,7 +127,7 @@
               Full Time
             </label>
             <label>
-              <input type="checkbox" v-model="player.active">
+              <input type="checkbox" v-model="player.active" :disabled="userRole === 'player' && player.id !== loggedInUser.id">
               In
             </label>
             <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
@@ -231,6 +236,7 @@ import { inject, ref, computed, onMounted, onUnmounted, watch } from 'vue';
 // Inject data and methods provided by App.vue
 const players = inject('players');
 const userRole = inject('userRole');
+const loggedInUser = inject('loggedInUser');
 const nextGameDate = inject('nextGameDate');
 const isGameCancelled = inject('isGameCancelled');
 const toggleGameCancellation = inject('toggleGameCancellation');
@@ -248,6 +254,7 @@ const selectedForSwapLight = inject('selectedForSwapLight');
 const selectedForSwapDark = inject('selectedForSwapDark');
 
 const adminMessage = ref('');
+const showInactivePlayers = ref(userRole.value === 'admin');
 
 watch(message, (newMessage) => {
   adminMessage.value = newMessage;
@@ -333,6 +340,15 @@ watch(players, (newPlayers) => {
   // Create a shallow copy, sort it, and update the ref
   sortedRosterPlayers.value = [...newPlayers].sort((a, b) => a.name.localeCompare(b.name));
 }, { deep: true, immediate: true }); // Use deep and immediate to catch all changes and run on setup
+
+const displayRoster = computed(() => {
+  if (userRole.value === 'admin' || showInactivePlayers.value) {
+    return sortedRosterPlayers.value;
+  }
+  // For players, show active players and their own player card regardless of status
+  return sortedRosterPlayers.value.filter(p => p.active || p.id === loggedInUser.value?.id);
+});
+
 const addPlayer = inject('addPlayer');
 const deletePlayer = inject('deletePlayer');
 // vote is removed

@@ -31,6 +31,7 @@ const router = useRouter();
 // --- Auth State ---
 const isAuthenticated = ref(localStorage.getItem('isAuthenticated') === 'true');
 const userRole = ref(localStorage.getItem('userRole') || null);
+const loggedInUser = ref(JSON.parse(localStorage.getItem('loggedInUser') || 'null'));
 
 // --- Game Status State ---
 const gameStatus = ref({ cancelledFor: null, bbqOn: false, message: '', teamsLocked: false }); // e.g. { cancelledFor: '2025-07-04', bbqOn: true, message: 'Hi' }
@@ -62,7 +63,7 @@ const isGameCancelled = computed(() => {
   return cancelledDate.getTime() === nextGameDay.getTime();
 });
 
-const login = (password, role) => {
+const login = (password, role, user) => {
   const isAdminLogin = role === 'admin' && password === 'beerbeer';
   const isPlayerLogin = role === 'player' && password === 'beer';
 
@@ -71,6 +72,15 @@ const login = (password, role) => {
     userRole.value = role;
     localStorage.setItem('isAuthenticated', 'true');
     localStorage.setItem('userRole', role);
+
+    let userToStore = user;
+    if (role === 'admin') {
+      // Create a default user object for admin sessions
+      userToStore = { name: 'Admin', id: 'admin' };
+    }
+    loggedInUser.value = userToStore;
+    localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
+
     loadPlayers(); // Load players on successful login
     loadGameStatus(); // Load game status on successful login
     loadTeamsForCurrentWeek(); // Check for existing teams file
@@ -83,8 +93,10 @@ const login = (password, role) => {
 const logout = () => {
   isAuthenticated.value = false;
   userRole.value = null;
+  loggedInUser.value = null;
   localStorage.removeItem('isAuthenticated');
   localStorage.removeItem('userRole');
+  localStorage.removeItem('loggedInUser');
   router.push({ name: 'Login' });
 };
 
@@ -736,6 +748,7 @@ provide('votesDark', votesDark);
 provide('compositionId', compositionId);
 provide('selectedForSwapLight', selectedForSwapLight);
 provide('selectedForSwapDark', selectedForSwapDark);
+provide('loggedInUser', loggedInUser);
 
 </script>
 

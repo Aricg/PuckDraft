@@ -102,7 +102,7 @@
       </h2>
       <div class="roster-controls" v-if="userRole === 'admin'">
         <button @click="clearWaitlist" class="clear-waitlist-btn">Clear Waitlist</button>
-        <button @click="toggleAllPlayers(false)" class="all-out-btn">All Out</button>
+        <button @click="setFullTimersIn" class="full-timers-btn">Full Timers In</button>
       </div>
       <div class="roster-controls" v-if="userRole === 'player'">
         <label>
@@ -282,11 +282,9 @@ const handleClearMessage = () => {
   alert('Message cleared!');
 };
 
-const toggleAllPlayers = (status) => {
+const setFullTimersIn = () => {
   players.value.forEach(p => {
-    if (!p.isFullTime) {
-      p.active = status;
-    }
+    p.active = p.isFullTime;
   });
 };
 
@@ -897,12 +895,12 @@ button {
 .roster-controls .clear-waitlist-btn:hover {
   background-color: var(--button-hover-bg-color);
 }
-.roster-controls .all-out-btn {
-  background-color: var(--delete-button-bg-color);
+.roster-controls .full-timers-btn {
+  background-color: var(--button-bg-color);
   color: var(--button-text-color);
 }
-.roster-controls .all-out-btn:hover {
-  background-color: var(--delete-button-hover-bg-color);
+.roster-controls .full-timers-btn:hover {
+  background-color: var(--button-hover-bg-color);
 }
 
 .team-list li.selected-for-swap {

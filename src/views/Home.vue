@@ -111,25 +111,6 @@
       </div>
       <ul v-if="displayRoster.length > 0">
         <li v-for="player in displayRoster" :key="player.id" :class="{ inactive: !player.active }">
-          <span class="roster-player-controls">
-            <label v-if="userRole === 'admin'" class="balance-control">
-              Dues: $
-              <input type="number" v-model.number="player.balanceDue" class="balance-input">
-            </label>
-            <label v-if="userRole === 'admin'">
-              <input type="checkbox" v-model="player.isFullTime">
-              FT
-            </label>
-            <label :style="{ visibility: ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)) ? 'visible' : 'hidden' }">
-              <input type="checkbox" v-model="player.waitlisted" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || player.active">
-              Waitlist
-            </label>
-            <label>
-              <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)))">
-              In
-            </label>
-            <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
-          </span>
           <span>
             {{ player.name }}
             <!-- Static display for Goalies -->
@@ -139,6 +120,25 @@
               <option value="F">F</option>
               <option value="D">D</option>
             </select>
+          </span>
+          <span class="roster-player-controls">
+            <label v-if="userRole === 'admin'">
+              <input type="checkbox" v-model="player.isFullTime">
+              FT
+            </label>
+            <label>
+              <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)))">
+              In
+            </label>
+            <label :style="{ visibility: ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)) ? 'visible' : 'hidden' }">
+              <input type="checkbox" v-model="player.waitlisted" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || player.active">
+              Waitlist
+            </label>
+            <label v-if="userRole === 'admin'" class="balance-control">
+              Dues: $
+              <input type="number" v-model.number="player.balanceDue" class="balance-input">
+            </label>
+            <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
           </span>
         </li>
       </ul>

@@ -4,9 +4,16 @@
      <router-link to="/" class="nav-link">Back to Main App</router-link>
     <ul v-if="rankedPlayers.length > 0">
       <li v-for="(player, index) in rankedPlayers" :key="player.id">
-        <span>
-          {{ index + 1 }}. {{ player.name }} ({{ player.position }}) -
-          {{ player.wins }}W / {{ player.losses }}L
+        <span class="player-info">
+          {{ index + 1 }}. {{ player.name }} ({{ player.position }})
+        </span>
+        <span class="player-stats" v-if="userRole === 'admin'">
+          <input type="number" v-model.number="player.wins" class="stat-input" min="0"> W /
+          <input type="number" v-model.number="player.losses" class="stat-input" min="0"> L
+          &nbsp;({{ (calculateWinRatio(player) * 100).toFixed(1) }}%)
+        </span>
+        <span class="player-stats" v-else>
+          - {{ player.wins }}W / {{ player.losses }}L
           ({{ (calculateWinRatio(player) * 100).toFixed(1) }}%)
         </span>
       </li>
@@ -21,6 +28,7 @@ import { inject } from 'vue';
 // Inject necessary data/functions
 const rankedPlayers = inject('rankedPlayers');
 const calculateWinRatio = inject('calculateWinRatio');
+const userRole = inject('userRole');
 
 </script>
 
@@ -43,8 +51,34 @@ const calculateWinRatio = inject('calculateWinRatio');
 }
 
 .leaderboard li {
-  padding: 5px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
   border-bottom: 1px solid var(--section-border-color);
+}
+
+.player-info {
+  text-align: left;
+}
+
+.player-stats {
+  text-align: right;
+  display: flex;
+  align-items: center;
+}
+
+.stat-input {
+  width: 50px;
+  text-align: right;
+  padding: 2px 5px;
+  margin: 0 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 0.9em;
 }
 
 .leaderboard li:last-child {

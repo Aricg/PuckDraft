@@ -524,6 +524,16 @@ const swapPreview = computed(() => {
   color: var(--text-color);
 }
 
+/* Hide arrows from number input */
+.balance-input::-webkit-outer-spin-button,
+.balance-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.balance-input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .roster li.inactive span {
   text-decoration: line-through;
   color: var(--inactive-text-color);

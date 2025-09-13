@@ -381,6 +381,7 @@ const addPlayer = () => {
     wins: 0,
     losses: 0,
     balanceDue: 0,
+    waitlisted: false,
   };
   players.value.push(newPlayer);
   newPlayerName.value = '';
@@ -411,6 +412,7 @@ const loadPlayers = async () => {
             wins: wins,
             losses: losses,
             balanceDue: player.balanceDue || 0,
+            waitlisted: player.waitlisted || false,
             score: undefined
         };
     }).filter(player => player.id !== undefined);

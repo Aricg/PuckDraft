@@ -130,6 +130,10 @@
               <input type="checkbox" v-model="player.isFullTime">
               FT
             </label>
+            <label v-if="!player.active && ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull))">
+              <input type="checkbox" v-model="player.waitlisted" :disabled="userRole === 'player' && player.id !== loggedInUser.id">
+              Waitlist
+            </label>
             <label>
               <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)))">
               In

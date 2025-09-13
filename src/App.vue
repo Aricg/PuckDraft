@@ -514,15 +514,42 @@ const generateTeams = () => {
   if (numForwards + numDefensemen + numGoalies < 2) { alert("Need at least two active players."); return; }
 
   const draftTeamLight = []; const draftTeamDark = []; showTeams.value = true;
-  let firstForwardPicker = 'Light';
-  if (numForwards > 0) {
-      const forwardPickOrder = getPickOrder(numForwards, firstForwardPicker, draftType.value);
-      rankedForwards.forEach((p, i) => forwardPickOrder[i] === 'Light' ? draftTeamLight.push(p) : draftTeamDark.push(p));
-  }
-  if (numDefensemen > 0) {
-      const firstDefensemanPicker = 'Dark';
-      const defensemanPickOrder = getPickOrder(numDefensemen, firstDefensemanPicker, draftType.value);
-      rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'Light' ? draftTeamLight.push(p) : draftTeamDark.push(p));
+
+  if (draftType.value === 'paired') {
+    const rankedSkaters = [...rankedForwards, ...rankedDefensemen].sort((a, b) => calculateWinRatio(b) - calculateWinRatio(a));
+    const pairs = [];
+    while (rankedSkaters.length > 1) {
+      pairs.push([rankedSkaters.shift(), rankedSkaters.pop()]);
+    }
+
+    pairs.forEach((pair, index) => {
+      if (index % 2 === 0) { // Alternate pairs between teams
+        draftTeamLight.push(...pair);
+      } else {
+        draftTeamDark.push(...pair);
+      }
+    });
+
+    // If there's an odd number of skaters, one will be left over
+    if (rankedSkaters.length === 1) {
+      // Assign the remaining player to the team with fewer players to keep sizes close
+      if (draftTeamLight.length <= draftTeamDark.length) {
+        draftTeamLight.push(rankedSkaters[0]);
+      } else {
+        draftTeamDark.push(rankedSkaters[0]);
+      }
+    }
+  } else { // Existing logic for 'simple' and 'serpentine'
+    let firstForwardPicker = 'Light';
+    if (numForwards > 0) {
+        const forwardPickOrder = getPickOrder(numForwards, firstForwardPicker, draftType.value);
+        rankedForwards.forEach((p, i) => forwardPickOrder[i] === 'Light' ? draftTeamLight.push(p) : draftTeamDark.push(p));
+    }
+    if (numDefensemen > 0) {
+        const firstDefensemanPicker = 'Dark';
+        const defensemanPickOrder = getPickOrder(numDefensemen, firstDefensemanPicker, draftType.value);
+        rankedDefensemen.forEach((p, i) => defensemanPickOrder[i] === 'Light' ? draftTeamLight.push(p) : draftTeamDark.push(p));
+    }
   }
 
   // Calculate initial average skater win ratio to determine goalie pick order

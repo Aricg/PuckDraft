@@ -148,6 +148,9 @@
           <label>
             <input type="radio" value="simple" v-model="draftType"> Simple (A, B, A, B)
           </label>
+          <label>
+            <input type="radio" value="paired" v-model="draftType"> Paired (1st with last)
+          </label>
         </div>
         <button @click="generateTeams" :disabled="activePlayers.length < 2">Generate Balanced Teams</button>
      </section>

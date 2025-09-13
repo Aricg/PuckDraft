@@ -123,12 +123,12 @@
           </span>
           <span class="roster-player-controls">
             <label v-if="userRole === 'admin'" class="balance-control">
-              Balance Due: $
+              Dues: $
               <input type="number" v-model.number="player.balanceDue" class="balance-input">
             </label>
             <label v-if="userRole === 'admin'">
               <input type="checkbox" v-model="player.isFullTime">
-              Full Time
+              FT
             </label>
             <label>
               <input type="checkbox" v-model="player.active" :disabled="userRole === 'player' && player.id !== loggedInUser.id">

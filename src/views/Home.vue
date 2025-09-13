@@ -167,7 +167,7 @@
               @drop="onDrop($event, 'Light')"
             >
                 <h3>Light</h3>
-                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioLight * 100).toFixed(1) }}%</p>
+                <p class="team-strength" v-if="userRole === 'admin'">Avg Skater Strength: {{ (avgSkaterRatioLight * 100).toFixed(1) }}%</p>
                 <ul>
                     <li
                       v-for="player in teamLight"
@@ -190,7 +190,7 @@
               @drop="onDrop($event, 'Dark')"
             >
                 <h3>Dark</h3>
-                <p class="team-strength">Avg Skater Strength: {{ (avgSkaterRatioDark * 100).toFixed(1) }}%</p>
+                <p class="team-strength" v-if="userRole === 'admin'">Avg Skater Strength: {{ (avgSkaterRatioDark * 100).toFixed(1) }}%</p>
                 <ul>
                      <li
                        v-for="player in teamDark"

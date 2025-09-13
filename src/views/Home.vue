@@ -122,6 +122,10 @@
             </select>
           </span>
           <span class="roster-player-controls">
+            <label v-if="userRole === 'admin'" class="balance-control">
+              Balance Due: $
+              <input type="number" v-model.number="player.balanceDue" class="balance-input">
+            </label>
             <label v-if="userRole === 'admin'">
               <input type="checkbox" v-model="player.isFullTime">
               Full Time
@@ -502,6 +506,22 @@ const swapPreview = computed(() => {
   display: flex;
   align-items: center;
   gap: 15px; /* Space between controls */
+}
+
+.balance-control {
+  display: flex;
+  align-items: center;
+}
+
+.balance-input {
+  width: 60px;
+  text-align: right;
+  padding: 2px 5px;
+  margin-left: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 .roster li.inactive span {

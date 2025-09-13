@@ -380,6 +380,7 @@ const addPlayer = () => {
     isFullTime: false,
     wins: 0,
     losses: 0,
+    balanceDue: 0,
   };
   players.value.push(newPlayer);
   newPlayerName.value = '';
@@ -409,6 +410,7 @@ const loadPlayers = async () => {
             isFullTime: player.isFullTime === true, // Default to false if not explicitly true
             wins: wins,
             losses: losses,
+            balanceDue: player.balanceDue || 0,
             score: undefined
         };
     }).filter(player => player.id !== undefined);

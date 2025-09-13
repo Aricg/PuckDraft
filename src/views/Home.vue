@@ -110,7 +110,7 @@
         </label>
       </div>
       <ul v-if="displayRoster.length > 0">
-        <li v-for="player in displayRoster" :key="player.id" :class="{ inactive: !player.active }">
+        <li v-for="player in displayRoster" :key="player.id" :class="{ 'player-in': player.active, 'player-waitlisted': player.waitlisted, inactive: !player.active && !player.waitlisted }">
           <span>
             {{ player.name }}
             <!-- Static display for Goalies -->
@@ -512,6 +512,14 @@ const swapPreview = computed(() => {
   align-items: center;
   padding: 8px;
   border-bottom: 1px solid var(--section-border-color);
+}
+
+.roster li.player-in {
+  background-color: var(--drag-over-bg-color);
+}
+
+.roster li.player-waitlisted {
+  background-color: #fff3cd; /* light yellow */
 }
 
 .roster-player-controls {

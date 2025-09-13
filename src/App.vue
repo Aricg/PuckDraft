@@ -380,7 +380,6 @@ const addPlayer = () => {
     isFullTime: false,
     wins: 0,
     losses: 0,
-    comparisonCount: 0,
   };
   players.value.push(newPlayer);
   newPlayerName.value = '';
@@ -410,7 +409,6 @@ const loadPlayers = async () => {
             isFullTime: player.isFullTime === true, // Default to false if not explicitly true
             wins: wins,
             losses: losses,
-            comparisonCount: player.comparisonCount !== undefined ? player.comparisonCount : (wins + losses),
             score: undefined
         };
     }).filter(player => player.id !== undefined);
@@ -469,10 +467,8 @@ const getRandomPair = () => {
   }
 
   playersToCompare = comparisonType === 'Goalies' ? activeGoalies : activeSkaters;
-  const minCount = Math.min(...playersToCompare.map(p => p.comparisonCount));
-  const lowCountPlayers = playersToCompare.filter(p => p.comparisonCount === minCount);
-  const indexA = Math.floor(Math.random() * lowCountPlayers.length);
-  playerA.value = lowCountPlayers[indexA];
+  const indexA = Math.floor(Math.random() * playersToCompare.length);
+  playerA.value = playersToCompare[indexA];
   const remainingPlayers = playersToCompare.filter(p => p.id !== playerA.value.id);
   if (remainingPlayers.length === 0) {
     playerA.value = null; playerB.value = null; return;
@@ -480,10 +476,6 @@ const getRandomPair = () => {
   const indexB = Math.floor(Math.random() * remainingPlayers.length);
   playerB.value = remainingPlayers[indexB];
 
-  const playerAInFullList = players.value.find(p => p.id === playerA.value.id);
-  const playerBInFullList = players.value.find(p => p.id === playerB.value.id);
-  if (playerAInFullList) playerAInFullList.comparisonCount++;
-  if (playerBInFullList) playerBInFullList.comparisonCount++;
   console.log(`New pair: ${playerA.value?.name} vs ${playerB.value?.name}`);
 };
 

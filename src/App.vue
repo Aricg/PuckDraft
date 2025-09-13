@@ -25,6 +25,7 @@
 // Keep only the state and logic needed across all routes or for App.vue itself
 import { ref, onMounted, watch, computed, provide } from 'vue';
 import { useRouter } from 'vue-router';
+import { getPickOrder } from './utils/draftUtils.js';
 
 const router = useRouter();
 
@@ -503,40 +504,6 @@ watch(activePlayers, (newActivePlayers, oldActivePlayers) => {
         getRandomPair();
     }
 }, { deep: true });
-
-const getPickOrder = (numPicks, firstPicker, type) => {
-  const order = [];
-  const secondPicker = firstPicker === 'Light' ? 'Dark' : 'Light';
-
-  if (type === 'simple') {
-    let currentPicker = firstPicker;
-    for (let i = 0; i < numPicks; i++) {
-      order.push(currentPicker);
-      currentPicker = (currentPicker === firstPicker) ? secondPicker : firstPicker;
-    }
-  } else { // Serpentine (A, B, B, A)
-    for (let i = 0; i < numPicks; i++) {
-      const round = Math.floor(i / 2); // Round (0, 1, 2...)
-      const pickInRound = i % 2; // Pick within the round (0 or 1)
-
-      if (round % 2 === 1) { // Odd rounds (1, 3...) are reverse order
-        order.push(pickInRound === 0 ? secondPicker : firstPicker);
-      } else { // Even rounds (0, 2...) are standard order
-        order.push(pickInRound === 0 ? firstPicker : secondPicker);
-      }
-    }
-
-    // Correction for odd numbers to ensure team sizes are balanced.
-    // The first picker should always get the extra player.
-    if (numPicks % 2 !== 0) {
-      const firstPickerCount = order.filter(p => p === firstPicker).length;
-      if (firstPickerCount < numPicks - firstPickerCount) {
-        order[numPicks - 1] = firstPicker; // Swap last pick if balance is wrong
-      }
-    }
-  }
-  return order;
-};
 
 const generateTeams = () => {
   const rankedForwards = rankedPlayers.value.filter(p => p.position === 'F').sort((a, b) => calculateWinRatio(b) - calculateWinRatio(a)); // Sort by ratio

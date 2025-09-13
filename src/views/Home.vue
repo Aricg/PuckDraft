@@ -111,16 +111,6 @@
       </div>
       <ul v-if="displayRoster.length > 0">
         <li v-for="player in displayRoster" :key="player.id" :class="{ inactive: !player.active }">
-          <span>
-            {{ player.name }}
-            <!-- Static display for Goalies -->
-            <span v-if="player.position === 'G'"> (G)</span>
-            <!-- Dropdown for F/D -->
-            <select v-else v-model="player.position" class="position-select" :disabled="userRole !== 'admin'">
-              <option value="F">F</option>
-              <option value="D">D</option>
-            </select>
-          </span>
           <span class="roster-player-controls">
             <label v-if="userRole === 'admin'" class="balance-control">
               Dues: $
@@ -139,6 +129,16 @@
               In
             </label>
             <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
+          </span>
+          <span>
+            {{ player.name }}
+            <!-- Static display for Goalies -->
+            <span v-if="player.position === 'G'"> (G)</span>
+            <!-- Dropdown for F/D -->
+            <select v-else v-model="player.position" class="position-select" :disabled="userRole !== 'admin'">
+              <option value="F">F</option>
+              <option value="D">D</option>
+            </select>
           </span>
         </li>
       </ul>

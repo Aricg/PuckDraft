@@ -131,7 +131,7 @@
               FT
             </label>
             <label>
-              <input type="checkbox" v-model="player.active" :disabled="userRole === 'player' && player.id !== loggedInUser.id">
+              <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)))">
               In
             </label>
             <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
@@ -373,6 +373,9 @@ const activeForwardCount = inject('activeForwardCount');
 const activeDefenseCount = inject('activeDefenseCount');
 const activeGoalieCount = inject('activeGoalieCount');
 const activePlayers = inject('activePlayers');
+
+const isSkatersFull = computed(() => (activeForwardCount.value + activeDefenseCount.value) >= 20);
+const isGoaliesFull = computed(() => activeGoalieCount.value >= 2);
 
 // Inject refs needed for this view
 const newPlayerName = inject('newPlayerName');

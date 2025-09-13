@@ -188,6 +188,7 @@ const loadTeamsForCurrentWeek = async () => {
   try {
     const response = await fetch(`/api/teams?filename=${filename}`);
     if (response.ok) {
+      isNewWeek.value = false;
       const teamsData = await response.json();
       // Add backward compatibility for old team files
       teamLight.value = teamsData.teamLight || teamsData.teamA || [];
@@ -201,6 +202,7 @@ const loadTeamsForCurrentWeek = async () => {
       console.log(`Successfully loaded teams from ${filename}`);
     } else if (response.status === 404) {
       console.log(`No teams file found for this week (${filename}).`);
+      isNewWeek.value = true;
       // Reset teams state if no file is found
       teamLight.value = [];
       teamDark.value = [];
@@ -282,6 +284,7 @@ const castVoteForTeam = async (team) => {
 // --- Core State ---
 const players = ref([]); // Master list of players
 const isPlayersLoaded = ref(false); // Flag to prevent saving before initial load
+const isNewWeek = ref(false); // True if no teams file found for current week
 
 // --- State needed by child components (will be provided) ---
 const newPlayerName = ref('');
@@ -450,6 +453,16 @@ onMounted(() => {
   }
 });
 watch(players, savePlayers, { deep: true });
+
+
+watch([isPlayersLoaded, isNewWeek], ([playersLoaded, newWeek]) => {
+  if (playersLoaded && newWeek) {
+    console.log("New week detected; clearing player waitlist statuses.");
+    players.value.forEach(p => {
+      p.waitlisted = false;
+    });
+  }
+});
 
 
 const getRandomPair = () => {

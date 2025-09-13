@@ -101,7 +101,7 @@
         </span>
       </h2>
       <div class="roster-controls" v-if="userRole === 'admin'">
-        <button @click="toggleAllPlayers(true)" class="all-in-btn">All In</button>
+        <button @click="clearWaitlist" class="clear-waitlist-btn">Clear Waitlist</button>
         <button @click="toggleAllPlayers(false)" class="all-out-btn">All Out</button>
       </div>
       <div class="roster-controls" v-if="userRole === 'player'">
@@ -288,6 +288,13 @@ const toggleAllPlayers = (status) => {
       p.active = status;
     }
   });
+};
+
+const clearWaitlist = () => {
+  players.value.forEach(p => {
+    p.waitlisted = false;
+  });
+  alert('Waitlist has been cleared.');
 };
 
 // For admin game management display
@@ -883,12 +890,12 @@ button {
   justify-content: center;
   gap: 10px;
 }
-.roster-controls .all-in-btn {
-  background-color: var(--vote-button-bg-color);
+.roster-controls .clear-waitlist-btn {
+  background-color: var(--button-bg-color);
   color: var(--button-text-color);
 }
-.roster-controls .all-in-btn:hover {
-  background-color: var(--vote-button-hover-bg-color);
+.roster-controls .clear-waitlist-btn:hover {
+  background-color: var(--button-hover-bg-color);
 }
 .roster-controls .all-out-btn {
   background-color: var(--delete-button-bg-color);

@@ -569,7 +569,6 @@ const swapPreview = computed(() => {
 }
 
 .roster li.inactive span {
-  text-decoration: line-through;
   color: var(--inactive-text-color);
 }
 

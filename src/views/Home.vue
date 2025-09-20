@@ -127,7 +127,7 @@
               FT
             </label>
             <label>
-              <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && (isRosterFull || (player.position === 'G' ? isGoaliesFull : isSkatersFull)))">
+              <input type="checkbox" v-model="player.active" @change="handleActiveToggle(player)" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && (isRosterFull || (player.position === 'G' ? isGoaliesFull : isSkatersFull)))">
               In
             </label>
             <label :style="{ visibility: waitlistVisibility(player) }">
@@ -398,6 +398,12 @@ const waitlistVisibility = (player) => {
   if (player.waitlisted) return 'visible';
   const positionFull = player.position === 'G' ? isGoaliesFull.value : isSkatersFull.value;
   return (positionFull || isRosterFull.value) ? 'visible' : 'hidden';
+};
+
+const handleActiveToggle = (player) => {
+  if (player.active && player.waitlisted) {
+    player.waitlisted = false;
+  }
 };
 
 // Inject refs needed for this view

@@ -550,16 +550,35 @@ const generateTeams = () => {
       }
     };
 
+    const evaluateAssignment = (teamName, pairLength, defenseIncrement) => {
+      const projectedDefenseLight = defenseCountLight + (teamName === 'Light' ? defenseIncrement : 0);
+      const projectedDefenseDark = defenseCountDark + (teamName === 'Dark' ? defenseIncrement : 0);
+      const defenseDiff = Math.abs(projectedDefenseLight - projectedDefenseDark);
+
+      const projectedSizeLight = draftTeamLight.length + (teamName === 'Light' ? pairLength : 0);
+      const projectedSizeDark = draftTeamDark.length + (teamName === 'Dark' ? pairLength : 0);
+      const sizeDiff = Math.abs(projectedSizeLight - projectedSizeDark);
+
+      return { defenseDiff, sizeDiff };
+    };
+
     pairs.forEach((pair) => {
       const defenseInPair = pair.reduce((count, player) => count + (player.position === 'D' ? 1 : 0), 0);
+      const pairLength = pair.length;
+
+      const lightMetrics = evaluateAssignment('Light', pairLength, defenseInPair);
+      const darkMetrics = evaluateAssignment('Dark', pairLength, defenseInPair);
+
       let targetTeam = nextTeam;
 
-      if (defenseInPair > 0) {
-        const diffIfLight = Math.abs((defenseCountLight + defenseInPair) - defenseCountDark);
-        const diffIfDark = Math.abs(defenseCountLight - (defenseCountDark + defenseInPair));
-        if (diffIfLight !== diffIfDark) {
-          targetTeam = diffIfLight < diffIfDark ? 'Light' : 'Dark';
-        }
+      if (lightMetrics.defenseDiff < darkMetrics.defenseDiff) {
+        targetTeam = 'Light';
+      } else if (darkMetrics.defenseDiff < lightMetrics.defenseDiff) {
+        targetTeam = 'Dark';
+      } else if (lightMetrics.sizeDiff < darkMetrics.sizeDiff) {
+        targetTeam = 'Light';
+      } else if (darkMetrics.sizeDiff < lightMetrics.sizeDiff) {
+        targetTeam = 'Dark';
       }
 
       assignPairToTeam(pair, targetTeam, defenseInPair);
@@ -569,17 +588,20 @@ const generateTeams = () => {
     if (rankedSkaters.length === 1) {
       const remainingPlayer = rankedSkaters[0];
       const defenseIncrement = remainingPlayer.position === 'D' ? 1 : 0;
+      const lightMetrics = evaluateAssignment('Light', 1, defenseIncrement);
+      const darkMetrics = evaluateAssignment('Dark', 1, defenseIncrement);
+
       let targetTeam;
 
-      if (defenseIncrement > 0) {
-        const diffIfLight = Math.abs((defenseCountLight + defenseIncrement) - defenseCountDark);
-        const diffIfDark = Math.abs(defenseCountLight - (defenseCountDark + defenseIncrement));
-        if (diffIfLight !== diffIfDark) {
-          targetTeam = diffIfLight < diffIfDark ? 'Light' : 'Dark';
-        }
-      }
-
-      if (!targetTeam) {
+      if (lightMetrics.defenseDiff < darkMetrics.defenseDiff) {
+        targetTeam = 'Light';
+      } else if (darkMetrics.defenseDiff < lightMetrics.defenseDiff) {
+        targetTeam = 'Dark';
+      } else if (lightMetrics.sizeDiff < darkMetrics.sizeDiff) {
+        targetTeam = 'Light';
+      } else if (darkMetrics.sizeDiff < lightMetrics.sizeDiff) {
+        targetTeam = 'Dark';
+      } else {
         targetTeam = draftTeamLight.length <= draftTeamDark.length ? 'Light' : 'Dark';
       }
 

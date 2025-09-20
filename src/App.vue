@@ -613,6 +613,49 @@ const generateTeams = () => {
         defenseCountDark += defenseIncrement;
       }
     }
+  } else if (draftType.value === 'random') {
+    const randomForwards = shuffleArray([...rankedForwards]);
+    const randomDefense = shuffleArray([...rankedDefensemen]);
+
+    const positionCounts = {
+      Light: { F: 0, D: 0 },
+      Dark: { F: 0, D: 0 }
+    };
+    const teamCounts = { Light: 0, Dark: 0 };
+
+    const assignBalanced = (player) => {
+      const position = player.position;
+      const lightPosCount = positionCounts.Light[position];
+      const darkPosCount = positionCounts.Dark[position];
+      const totalLight = teamCounts.Light;
+      const totalDark = teamCounts.Dark;
+
+      let targetTeam;
+      if (lightPosCount < darkPosCount) {
+        targetTeam = 'Light';
+      } else if (darkPosCount < lightPosCount) {
+        targetTeam = 'Dark';
+      } else if (totalLight < totalDark) {
+        targetTeam = 'Light';
+      } else if (totalDark < totalLight) {
+        targetTeam = 'Dark';
+      } else {
+        targetTeam = Math.random() < 0.5 ? 'Light' : 'Dark';
+      }
+
+      if (targetTeam === 'Light') {
+        draftTeamLight.push(player);
+        positionCounts.Light[position]++;
+        teamCounts.Light++;
+      } else {
+        draftTeamDark.push(player);
+        positionCounts.Dark[position]++;
+        teamCounts.Dark++;
+      }
+    };
+
+    randomForwards.forEach(assignBalanced);
+    randomDefense.forEach(assignBalanced);
   } else { // Existing logic for 'simple' and 'serpentine'
     let firstForwardPicker = 'Light';
     if (numForwards > 0) {

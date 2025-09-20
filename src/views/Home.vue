@@ -159,6 +159,9 @@
           <label>
             <input type="radio" value="paired" v-model="draftType"> Paired (1st with last)
           </label>
+          <label>
+            <input type="radio" value="random" v-model="draftType"> Random (balanced F/D)
+          </label>
         </div>
         <button @click="generateTeams" :disabled="activePlayers.length < 2">Generate Balanced Teams</button>
      </section>

@@ -395,6 +395,7 @@ const isGoaliesFull = computed(() => activeGoalieCount.value >= MAX_GOALIES);
 const isRosterFull = computed(() => activeRosterCount.value >= MAX_ROSTER_SIZE);
 
 const waitlistVisibility = (player) => {
+  if (player.waitlisted) return 'visible';
   const positionFull = player.position === 'G' ? isGoaliesFull.value : isSkatersFull.value;
   return (positionFull || isRosterFull.value) ? 'visible' : 'hidden';
 };

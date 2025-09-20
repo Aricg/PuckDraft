@@ -127,10 +127,10 @@
               FT
             </label>
             <label>
-              <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)))">
+              <input type="checkbox" v-model="player.active" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && (isRosterFull || (player.position === 'G' ? isGoaliesFull : isSkatersFull)))">
               In
             </label>
-            <label :style="{ visibility: ((player.position === 'G' && isGoaliesFull) || (['F', 'D'].includes(player.position) && isSkatersFull)) ? 'visible' : 'hidden' }">
+            <label :style="{ visibility: waitlistVisibility(player) }">
               <input type="checkbox" v-model="player.waitlisted" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || player.active">
               Waitlist
             </label>
@@ -383,8 +383,21 @@ const activeDefenseCount = inject('activeDefenseCount');
 const activeGoalieCount = inject('activeGoalieCount');
 const activePlayers = inject('activePlayers');
 
-const isSkatersFull = computed(() => (activeForwardCount.value + activeDefenseCount.value) >= 20);
-const isGoaliesFull = computed(() => activeGoalieCount.value >= 2);
+const MAX_SKATERS = 20;
+const MAX_GOALIES = 2;
+const MAX_ROSTER_SIZE = MAX_SKATERS + MAX_GOALIES;
+
+const activeSkaterCount = computed(() => activeForwardCount.value + activeDefenseCount.value);
+const activeRosterCount = computed(() => activeSkaterCount.value + activeGoalieCount.value);
+
+const isSkatersFull = computed(() => activeSkaterCount.value >= MAX_SKATERS);
+const isGoaliesFull = computed(() => activeGoalieCount.value >= MAX_GOALIES);
+const isRosterFull = computed(() => activeRosterCount.value >= MAX_ROSTER_SIZE);
+
+const waitlistVisibility = (player) => {
+  const positionFull = player.position === 'G' ? isGoaliesFull.value : isSkatersFull.value;
+  return (positionFull || isRosterFull.value) ? 'visible' : 'hidden';
+};
 
 // Inject refs needed for this view
 const newPlayerName = inject('newPlayerName');

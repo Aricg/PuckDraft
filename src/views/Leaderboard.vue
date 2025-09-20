@@ -8,8 +8,8 @@
           {{ index + 1 }}. {{ player.name }} ({{ player.position }})
         </span>
         <span class="player-stats" v-if="userRole === 'admin'">
-          <input type="number" v-model.number="player.wins" class="stat-input" min="0"> W /
-          <input type="number" v-model.number="player.losses" class="stat-input" min="0"> L
+          <input type="number" v-model.lazy.number="player.wins" class="stat-input" min="0"> W /
+          <input type="number" v-model.lazy.number="player.losses" class="stat-input" min="0"> L
           &nbsp;({{ (calculateWinRatio(player) * 100).toFixed(1) }}%)
         </span>
         <span class="player-stats" v-else>

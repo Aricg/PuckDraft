@@ -528,24 +528,67 @@ const generateTeams = () => {
     const rankedSkaters = [...rankedForwards, ...rankedDefensemen].sort((a, b) => calculateWinRatio(b) - calculateWinRatio(a));
     const pairs = [];
     while (rankedSkaters.length > 1) {
-      pairs.push([rankedSkaters.shift(), rankedSkaters.pop()]);
+      const topSkater = rankedSkaters.shift();
+      const bottomSkater = rankedSkaters.pop();
+      const pair = [];
+      if (topSkater) pair.push(topSkater);
+      if (bottomSkater) pair.push(bottomSkater);
+      if (pair.length) pairs.push(pair);
     }
 
-    pairs.forEach((pair, index) => {
-      if (index % 2 === 0) { // Alternate pairs between teams
+    let nextTeam = 'Light';
+    let defenseCountLight = 0;
+    let defenseCountDark = 0;
+
+    const assignPairToTeam = (pair, teamName, defenseInPair) => {
+      if (teamName === 'Light') {
         draftTeamLight.push(...pair);
+        defenseCountLight += defenseInPair;
       } else {
         draftTeamDark.push(...pair);
+        defenseCountDark += defenseInPair;
       }
+    };
+
+    pairs.forEach((pair) => {
+      const defenseInPair = pair.reduce((count, player) => count + (player.position === 'D' ? 1 : 0), 0);
+      let targetTeam = nextTeam;
+
+      if (defenseInPair > 0) {
+        const diffIfLight = Math.abs((defenseCountLight + defenseInPair) - defenseCountDark);
+        const diffIfDark = Math.abs(defenseCountLight - (defenseCountDark + defenseInPair));
+        if (diffIfLight !== diffIfDark) {
+          targetTeam = diffIfLight < diffIfDark ? 'Light' : 'Dark';
+        }
+      }
+
+      assignPairToTeam(pair, targetTeam, defenseInPair);
+      nextTeam = targetTeam === 'Light' ? 'Dark' : 'Light';
     });
 
-    // If there's an odd number of skaters, one will be left over
     if (rankedSkaters.length === 1) {
-      // Assign the remaining player to the team with fewer players to keep sizes close
-      if (draftTeamLight.length <= draftTeamDark.length) {
-        draftTeamLight.push(rankedSkaters[0]);
+      const remainingPlayer = rankedSkaters[0];
+      const defenseIncrement = remainingPlayer.position === 'D' ? 1 : 0;
+      let targetTeam;
+
+      if (defenseIncrement > 0) {
+        const diffIfLight = Math.abs((defenseCountLight + defenseIncrement) - defenseCountDark);
+        const diffIfDark = Math.abs(defenseCountLight - (defenseCountDark + defenseIncrement));
+        if (diffIfLight !== diffIfDark) {
+          targetTeam = diffIfLight < diffIfDark ? 'Light' : 'Dark';
+        }
+      }
+
+      if (!targetTeam) {
+        targetTeam = draftTeamLight.length <= draftTeamDark.length ? 'Light' : 'Dark';
+      }
+
+      if (targetTeam === 'Light') {
+        draftTeamLight.push(remainingPlayer);
+        defenseCountLight += defenseIncrement;
       } else {
-        draftTeamDark.push(rankedSkaters[0]);
+        draftTeamDark.push(remainingPlayer);
+        defenseCountDark += defenseIncrement;
       }
     }
   } else { // Existing logic for 'simple' and 'serpentine'

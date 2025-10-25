@@ -101,8 +101,10 @@
         </span>
       </h2>
       <div class="roster-controls" v-if="userRole === 'admin'">
-        <button @click="clearWaitlist" class="clear-waitlist-btn">Clear Waitlist</button>
+        <button @click="setAllPlayersIn" class="all-in-btn">All In</button>
+        <button @click="setAllPlayersOut" class="all-out-btn">All Out</button>
         <button @click="setFullTimersIn" class="full-timers-btn">Full Timers In</button>
+        <button @click="clearWaitlist" class="clear-waitlist-btn">Clear Waitlist</button>
       </div>
       <div class="roster-controls" v-if="userRole === 'player'">
         <label>
@@ -288,6 +290,20 @@ const handleClearMessage = () => {
 const setFullTimersIn = () => {
   players.value.forEach(p => {
     p.active = p.isFullTime;
+  });
+};
+
+const setAllPlayersIn = () => {
+  players.value.forEach(p => {
+    p.active = true;
+    p.waitlisted = false;
+  });
+};
+
+const setAllPlayersOut = () => {
+  players.value.forEach(p => {
+    p.active = false;
+    p.waitlisted = false;
   });
 };
 
@@ -917,6 +933,20 @@ button {
   display: flex;
   justify-content: center;
   gap: 10px;
+}
+.roster-controls .all-in-btn {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+}
+.roster-controls .all-in-btn:hover {
+  background-color: var(--button-hover-bg-color);
+}
+.roster-controls .all-out-btn {
+  background-color: var(--delete-button-bg-color);
+  color: var(--button-text-color);
+}
+.roster-controls .all-out-btn:hover {
+  background-color: var(--delete-button-hover-bg-color);
 }
 .roster-controls .clear-waitlist-btn {
   background-color: var(--button-bg-color);

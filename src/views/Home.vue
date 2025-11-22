@@ -138,7 +138,7 @@
             </label>
             <label v-if="userRole === 'admin'" class="balance-control">
               Dues: $
-              <input type="number" v-model.number="player.balanceDue" class="balance-input">
+              <input type="text" inputmode="decimal" v-model.number="player.balanceDue" class="balance-input">
             </label>
             <button @click="deletePlayer(player.id)" class="delete-btn" v-if="userRole === 'admin'">Delete</button>
           </span>

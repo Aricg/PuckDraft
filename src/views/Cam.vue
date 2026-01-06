@@ -66,14 +66,14 @@ let intervalId = null;
 // Derived lists
 const deviceList = computed(() => Object.keys(imageData.value));
 const availableDates = computed(() => {
-  if (!selectedDevice.value || !imageData.value[selectedDevice.value]) return [];
+  if (!selectedDevice.value || !imageData.value?.[selectedDevice.value]) return [];
   // Sort dates descending (newest first)
   return Object.keys(imageData.value[selectedDevice.value]).sort().reverse();
 });
 
 const images = computed(() => {
   if (!selectedDevice.value || !selectedDate.value) return [];
-  return imageData.value[selectedDevice.value][selectedDate.value] || [];
+  return imageData.value?.[selectedDevice.value]?.[selectedDate.value] || [];
 });
 
 const currentImage = computed(() => {

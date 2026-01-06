@@ -63,10 +63,9 @@ function postHitCount() {
     req.end();
 }
 
-// Save and post hits every 60s
+// Save hits every 60s
 setInterval(() => {
     saveHitCount();
-    postHitCount();
 }, 60000);
 
 // --- Middleware ---

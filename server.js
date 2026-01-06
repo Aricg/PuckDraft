@@ -98,12 +98,25 @@ const requireApiKey = (req, res, next) => {
 // --- Camera Upload Endpoint ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, UPLOAD_DIR);
-    },
-    filename: (req, file, cb) => {
+        // Get device name from body (sanitize it)
         let name = req.body.name || 'unknown';
         name = name.replace(/[^a-zA-Z0-9-_]/g, ''); 
-        const filename = `${name}-${Date.now()}${path.extname(file.originalname)}`;
+        
+        // Get current date for folder structure (YYYY-MM-DD)
+        const date = new Date().toISOString().split('T')[0];
+        
+        // Create directory: public/uploads/{name}/{date}
+        const deviceDir = path.join(UPLOAD_DIR, name, date);
+
+        if (!fs.existsSync(deviceDir)) {
+            fs.mkdirSync(deviceDir, { recursive: true });
+        }
+        
+        cb(null, deviceDir);
+    },
+    filename: (req, file, cb) => {
+        // Filename is just the timestamp
+        const filename = `${Date.now()}${path.extname(file.originalname)}`;
         cb(null, filename);
     }
 });
@@ -126,6 +139,52 @@ app.post('/cam', requireApiKey, upload.single('imageFile'), (req, res) => {
     
     console.log(`Received image from ${req.body.name || 'unknown'}: ${req.file.filename}`);
     res.send('Upload successful');
+});
+
+// 5. Camera Images API
+app.get('/api/cam/images', (req, res) => {
+    try {
+        if (!fs.existsSync(UPLOAD_DIR)) {
+            return res.json({});
+        }
+
+        const devices = fs.readdirSync(UPLOAD_DIR).filter(f => fs.statSync(path.join(UPLOAD_DIR, f)).isDirectory());
+        const result = {};
+
+        devices.forEach(device => {
+            result[device] = {};
+            const devicePath = path.join(UPLOAD_DIR, device);
+            const dates = fs.readdirSync(devicePath).filter(f => fs.statSync(path.join(devicePath, f)).isDirectory());
+
+            dates.forEach(date => {
+                result[device][date] = [];
+                const datePath = path.join(devicePath, date);
+                const files = fs.readdirSync(datePath);
+
+                files.forEach(file => {
+                    if (file.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                        // timestamp is the filename without extension
+                        const timestamp = parseInt(file.split('.')[0]);
+                        if (!isNaN(timestamp)) {
+                            result[device][date].push({
+                                url: `/uploads/${device}/${date}/${file}`,
+                                timestamp: timestamp,
+                                filename: file
+                            });
+                        }
+                    }
+                });
+                
+                // Sort by timestamp
+                result[device][date].sort((a, b) => a.timestamp - b.timestamp);
+            });
+        });
+
+        res.json(result);
+    } catch (e) {
+        console.error("Error listing images:", e);
+        res.status(500).json({ message: 'Error listing images' });
+    }
 });
 
 // --- API Endpoints (Ported from vite.config.js) ---

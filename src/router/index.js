@@ -1,39 +1,41 @@
-import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
-import Leaderboard from '../views/Leaderboard.vue';
-import Pick from '../views/Pick.vue'; // Import the new component
 import Login from '../views/Login.vue';
+import Leaderboard from '../views/Leaderboard.vue';
+import Pick from '../views/Pick.vue';
 import PreviousGames from '../views/PreviousGames.vue';
+import Cam from '../views/Cam.vue'; // Import the new view
 
 const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: Home,
+  },
   {
     path: '/login',
     name: 'Login',
     component: Login,
   },
   {
-    path: '/',
-    name: 'Home',
-    component: Home,
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/leader',
     name: 'Leaderboard',
     component: Leaderboard,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, role: 'admin' }
   },
   {
-    path: '/pick', // Define the path
-    name: 'Pick',   // Give it a name
-    component: Pick, // Assign the component
-    meta: { requiresAuth: true },
+    path: '/pick',
+    name: 'Pick',
+    component: Pick,
   },
   {
     path: '/previous-games',
     name: 'PreviousGames',
     component: PreviousGames,
-    meta: { requiresAuth: true },
+  },
+  {
+    path: '/cam',
+    name: 'Cam',
+    component: Cam,
   },
 ];
 

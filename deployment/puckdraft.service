@@ -14,7 +14,7 @@ WorkingDirectory=/home/pi/PuckDraft
 # If not, provide the full path, e.g., /usr/local/bin/npm run serve ...
 # Note: Using the full path to npm is often more reliable in systemd services.
 # You can find the path by running 'which npm' on your Pi as the target user.
-ExecStart=/usr/bin/npm run serve -- --host 0.0.0.0
+ExecStart=/usr/bin/npm start
 
 # Restart the service if it fails
 Restart=on-failure

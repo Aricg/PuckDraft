@@ -79,6 +79,22 @@ app.use((req, res, next) => {
     next();
 });
 
+// --- Auth Middleware (Smell First) ---
+const requireApiKey = (req, res, next) => {
+    // Check Query or Headers (Available before body parsing)
+    const key = req.query.api_key || req.headers['x-api-key'];
+    
+    if (!API_KEY) {
+        return res.status(500).send('Server Misconfiguration: API_KEY missing');
+    }
+
+    if (key === API_KEY) {
+        return next(); // Key is good, proceed to upload
+    }
+
+    return res.status(403).send('Forbidden: Invalid API Key. Send in URL (?api_key=...) or Header (x-api-key).');
+};
+
 // --- Camera Upload Endpoint ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -104,10 +120,8 @@ const upload = multer({
     }
 });
 
-app.post('/cam', upload.single('imageFile'), (req, res) => {
-    const key = req.body.api_key || req.query.api_key || req.headers['x-api-key'];
-    if (!API_KEY) return res.status(500).send('Server Misconfiguration: API_KEY missing');
-    if (key !== API_KEY) return res.status(403).send('Forbidden: Invalid API Key');
+// Protect route with requireApiKey BEFORE upload.single
+app.post('/cam', requireApiKey, upload.single('imageFile'), (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded.');
     
     console.log(`Received image from ${req.body.name || 'unknown'}: ${req.file.filename}`);

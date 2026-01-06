@@ -78,7 +78,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Handle client-side routing: return index.html for all other non-API routes
-app.get('/(.*)', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 // --- Start Server ---

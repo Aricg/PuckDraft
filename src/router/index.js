@@ -11,6 +11,7 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home,
+    meta: { requiresAuth: true },
   },
   {
     path: '/login',
@@ -27,16 +28,19 @@ const routes = [
     path: '/pick',
     name: 'Pick',
     component: Pick,
+    meta: { requiresAuth: true },
   },
   {
     path: '/previous-games',
     name: 'PreviousGames',
     component: PreviousGames,
+    meta: { requiresAuth: true },
   },
   {
     path: '/cam',
     name: 'Cam',
     component: Cam,
+    meta: { requiresAuth: true },
   },
 ];
 

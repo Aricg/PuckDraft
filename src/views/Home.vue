@@ -129,11 +129,11 @@
               FT
             </label>
             <label>
-              <input type="checkbox" v-model="player.active" @change="handleActiveToggle(player)" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || (!player.active && (isRosterFull || (player.position === 'G' ? isGoaliesFull : isSkatersFull)))">
+              <input type="checkbox" v-model="player.active" @change="handleActiveToggle(player)" :disabled="(userRole === 'player' && player.id !== loggedInUser?.id) || (!player.active && (isRosterFull || (player.position === 'G' ? isGoaliesFull : isSkatersFull)))">
               In
             </label>
             <label :style="{ visibility: waitlistVisibility(player) }">
-              <input type="checkbox" v-model="player.waitlisted" :disabled="(userRole === 'player' && player.id !== loggedInUser.id) || player.active">
+              <input type="checkbox" v-model="player.waitlisted" :disabled="(userRole === 'player' && player.id !== loggedInUser?.id) || player.active">
               Waitlist
             </label>
             <label v-if="userRole === 'admin'" class="balance-control">
